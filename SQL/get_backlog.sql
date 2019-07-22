@@ -10,7 +10,9 @@ SELECT   DISTINCT
          bu.NAME AS BUSINESSEVENT_UNIT,
          co.NAME AS COMPANY,
          org.NAME AS ORGANIZATION,
-         class.NAME AS CLASSIFICATION
+         class.NAME AS CLASSIFICATION,
+         CLASS.REGISTRATIONIDPREFIX as CLASS_SHORT,
+         i.vip
   FROM                     KASPERSK.ISSUE i
                         LEFT JOIN
                            KASPERSK.BUSINESSUNIT bu

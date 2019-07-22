@@ -1,0 +1,132 @@
+---
+title: "DevOps Dashboard BETA"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+```
+
+Process
+===================================== 
+
+Row 
+-------------------------------------
+
+### Backlog Size (Number of Open Tickets on First Day of Month)
+
+```{r, warning=FALSE, message=FALSE}
+library(ggplot2)
+library(plotly)
+
+t_backlog_ticket <- read.csv(here::here("Data", "t_backlog_ticket.csv"), stringsAsFactors = FALSE)
+
+p <- ggplot(t_backlog_ticket, aes(x=CUTPOINT, y=BACKLOG, group = TICKET)) +
+  geom_line(aes(colour = TICKET)) +
+  theme(axis.text.x = element_text(angle = 90),
+        legend.title = element_blank(),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank()) 
+  
+
+ggplotly(p, tooltip = c("x", "y", "colour")) %>% 
+  layout(legend = list( orientation = "v", y = 0.5),
+         margin = list(b = 100))
+```
+
+
+
+### Throughput Time (Median Lead-Time of Closed Tickets in Days)
+
+```{r, warning=FALSE, message=FALSE}
+library(ggplot2)
+library(plotly)
+
+t_throughputtime_ticket <- read.csv(here::here("Data", "t_throughputtime_ticket.csv"), stringsAsFactors = FALSE)
+
+p <- ggplot(t_throughputtime_ticket, aes(x=CLOSED_MONTH, y=THROUGHPUT_TIME, group = TICKET)) +
+  geom_line(aes(colour = TICKET)) +
+  theme(axis.text.x = element_text(angle = 90),
+        legend.title = element_blank(),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank()) 
+  
+
+ggplotly(p, tooltip = c("x", "y", "colour")) %>% 
+  layout(legend = list( orientation = "v", y = 0.5),
+         margin = list(b = 100))
+```
+
+
+Row 
+-------------------------------------
+
+### Throughput (Number of Closed Tickets in Month)
+
+```{r, warning=FALSE, message=FALSE}
+library(ggplot2)
+library(plotly)
+
+t_throughput_ticket <- read.csv(here::here("Data", "t_throughput_ticket.csv"), stringsAsFactors = FALSE)
+
+p <- ggplot(t_throughput_ticket, aes(x=CLOSED_MONTH, y=THROUGHPUT, group = TICKET)) +
+  geom_line(aes(colour = TICKET)) +
+  theme(axis.text.x = element_text(angle = 90),
+        legend.title = element_blank(),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank()) 
+  
+
+ggplotly(p, tooltip = c("x", "y", "colour")) %>% 
+  layout(legend = list( orientation = "v", y = 0.5),
+         margin = list(b = 100))
+```
+
+
+### Resources (Consumed FTE in Month)
+
+```{r, warning=FALSE, message=FALSE}
+library(ggplot2)
+library(plotly)
+
+t_fte_ticket <- read.csv(here::here("Data", "t_fte_ticket.csv"), stringsAsFactors = FALSE)
+
+p <- ggplot(t_fte_ticket, aes(x=MONTH_WORKTIMESHEET, y=FTE, group = TICKET)) +
+  geom_line(aes(colour = TICKET)) +
+  theme(axis.text.x = element_text(angle = 90),
+        legend.title = element_blank(),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank())
+
+# t_fte_ticket_long <- t_fte_ticket %>% 
+#   select(MONTH_WORKTIMESHEET, TICKET, FTE, FTE_NORM) %>% 
+#   tidyr::gather(key = METRIC, value = VALUE, -MONTH_WORKTIMESHEET, -TICKET)
+# 
+# p <- ggplot(t_fte_ticket_long, aes(x=MONTH_WORKTIMESHEET, y=VALUE, group = TICKET)) +
+#   geom_line(aes(colour = TICKET)) +
+#   theme(axis.text.x = element_text(angle = 90),
+#         legend.title = element_blank(),
+#         axis.title.x = element_blank(),
+#         axis.title.y = element_blank()) +
+#   facet_grid(METRIC~., scales = "free_y")
+  #facet_wrap(~METRIC, scales = "free_y", ncol = 2)
+  
+
+ggplotly(p, tooltip = c("x", "y", "colour")) %>% 
+  layout(legend = list( orientation = "v", y = 0.5),
+         margin = list(b = 100))
+```
+
+
+
+Defects
+===================================== 
+
+
+
+
+Dev
+===================================== 
