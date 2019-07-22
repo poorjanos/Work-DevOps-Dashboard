@@ -156,10 +156,14 @@ t_fte_ticket <- t_fte_tr %>%
   filter(MONTH_WORKTIMESHEET >= floor_date(ymd(Sys.Date()) - years(2), unit = "month") &
            MONTH_WORKTIMESHEET < floor_date(ymd(Sys.Date()), unit = "month")) %>%
   group_by(MONTH_WORKTIMESHEET, TICKET) %>% 
-  summarize(HOURS_WORKTIMESHEET = sum(HOURS_WORKTIMESHEET)) %>% 
+  summarize(HOURS_WORKTIMESHEET = sum(HOURS_WORKTIMESHEET),
+            TICKET_NUM = n()) %>% 
   ungroup() %>% 
-  left_join(t_mnap, by = c("MONTH_WORKTIMESHEET" = "IDOSZAK"))
-  
+  left_join(t_mnap, by = c("MONTH_WORKTIMESHEET" = "IDOSZAK")) %>% 
+  mutate(FTE = round(HOURS_WORKTIMESHEET/7/MNAP, 2),
+         FTE_NORM = round(FTE/TICKET_NUM, 2)) 
+
+write.csv(t_fte_ticket, here::here("Data", "t_fte_ticket.csv"), row.names = FALSE)
   
   
   
