@@ -24,17 +24,21 @@ library(plotly)
 
 t_backlog_ticket <- read.csv(here::here("Data", "t_backlog_ticket.csv"), stringsAsFactors = FALSE)
 
-p <- ggplot(t_backlog_ticket, aes(x=CUTPOINT, y=BACKLOG, group = TICKET)) +
+p <- ggplot(t_backlog_ticket, aes(x = CUTPOINT, y = BACKLOG, group = TICKET)) +
   geom_line(aes(colour = TICKET)) +
-  theme(axis.text.x = element_text(angle = 90),
-        legend.title = element_blank(),
-        axis.title.x = element_blank(),
-        axis.title.y = element_blank()) 
-  
+  theme(
+    axis.text.x = element_text(angle = 90),
+    legend.title = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank()
+  )
 
-ggplotly(p, tooltip = c("x", "y", "colour")) %>% 
-  layout(legend = list( orientation = "v", y = 0.5),
-         margin = list(b = 100))
+
+ggplotly(p, tooltip = c("x", "y", "colour")) %>%
+  layout(
+    legend = list(orientation = "v", y = 0.5),
+    margin = list(b = 100)
+  )
 ```
 
 
@@ -47,17 +51,21 @@ library(plotly)
 
 t_throughputtime_ticket <- read.csv(here::here("Data", "t_throughputtime_ticket.csv"), stringsAsFactors = FALSE)
 
-p <- ggplot(t_throughputtime_ticket, aes(x=CLOSED_MONTH, y=THROUGHPUT_TIME, group = TICKET)) +
+p <- ggplot(t_throughputtime_ticket, aes(x = CLOSED_MONTH, y = THROUGHPUT_TIME, group = TICKET)) +
   geom_line(aes(colour = TICKET)) +
-  theme(axis.text.x = element_text(angle = 90),
-        legend.title = element_blank(),
-        axis.title.x = element_blank(),
-        axis.title.y = element_blank()) 
-  
+  theme(
+    axis.text.x = element_text(angle = 90),
+    legend.title = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank()
+  )
 
-ggplotly(p, tooltip = c("x", "y", "colour")) %>% 
-  layout(legend = list( orientation = "v", y = 0.5),
-         margin = list(b = 100))
+
+ggplotly(p, tooltip = c("x", "y", "colour")) %>%
+  layout(
+    legend = list(orientation = "v", y = 0.5),
+    margin = list(b = 100)
+  )
 ```
 
 
@@ -72,17 +80,21 @@ library(plotly)
 
 t_throughput_ticket <- read.csv(here::here("Data", "t_throughput_ticket.csv"), stringsAsFactors = FALSE)
 
-p <- ggplot(t_throughput_ticket, aes(x=CLOSED_MONTH, y=THROUGHPUT, group = TICKET)) +
+p <- ggplot(t_throughput_ticket, aes(x = CLOSED_MONTH, y = THROUGHPUT, group = TICKET)) +
   geom_line(aes(colour = TICKET)) +
-  theme(axis.text.x = element_text(angle = 90),
-        legend.title = element_blank(),
-        axis.title.x = element_blank(),
-        axis.title.y = element_blank()) 
-  
+  theme(
+    axis.text.x = element_text(angle = 90),
+    legend.title = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank()
+  )
 
-ggplotly(p, tooltip = c("x", "y", "colour")) %>% 
-  layout(legend = list( orientation = "v", y = 0.5),
-         margin = list(b = 100))
+
+ggplotly(p, tooltip = c("x", "y", "colour")) %>%
+  layout(
+    legend = list(orientation = "v", y = 0.5),
+    margin = list(b = 100)
+  )
 ```
 
 
@@ -94,39 +106,195 @@ library(plotly)
 
 t_fte_ticket <- read.csv(here::here("Data", "t_fte_ticket.csv"), stringsAsFactors = FALSE)
 
-p <- ggplot(t_fte_ticket, aes(x=MONTH_WORKTIMESHEET, y=FTE, group = TICKET)) +
+p <- ggplot(t_fte_ticket, aes(x = MONTH_WORKTIMESHEET, y = FTE, group = TICKET)) +
   geom_line(aes(colour = TICKET)) +
-  theme(axis.text.x = element_text(angle = 90),
-        legend.title = element_blank(),
-        axis.title.x = element_blank(),
-        axis.title.y = element_blank())
+  theme(
+    axis.text.x = element_text(angle = 90),
+    legend.title = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank()
+  )
 
-# t_fte_ticket_long <- t_fte_ticket %>% 
-#   select(MONTH_WORKTIMESHEET, TICKET, FTE, FTE_NORM) %>% 
-#   tidyr::gather(key = METRIC, value = VALUE, -MONTH_WORKTIMESHEET, -TICKET)
-# 
-# p <- ggplot(t_fte_ticket_long, aes(x=MONTH_WORKTIMESHEET, y=VALUE, group = TICKET)) +
-#   geom_line(aes(colour = TICKET)) +
-#   theme(axis.text.x = element_text(angle = 90),
-#         legend.title = element_blank(),
-#         axis.title.x = element_blank(),
-#         axis.title.y = element_blank()) +
-#   facet_grid(METRIC~., scales = "free_y")
-  #facet_wrap(~METRIC, scales = "free_y", ncol = 2)
-  
-
-ggplotly(p, tooltip = c("x", "y", "colour")) %>% 
-  layout(legend = list( orientation = "v", y = 0.5),
-         margin = list(b = 100))
+ggplotly(p, tooltip = c("x", "y", "colour")) %>%
+  layout(
+    legend = list(orientation = "v", y = 0.5),
+    margin = list(b = 100)
+  )
 ```
 
 
 
-Defects
+Teams
 ===================================== 
 
+Column {.tabset}
+-------------------------------------
+   
+### Backlog
+
+```{r, warning=FALSE, message=FALSE}
+library(ggplot2)
+library(plotly)
+
+t_backlog_ticket_team <- read.csv(here::here("Data", "t_backlog_ticket_team.csv"), stringsAsFactors = FALSE)
+
+p <- ggplot(t_backlog_ticket_team, aes(x = CUTPOINT, y = BACKLOG, group = APPGROUP)) +
+  geom_line(aes(colour = APPGROUP)) +
+  facet_wrap(~ TICKET, nrow = 2) +
+  theme(
+    axis.text.x = element_text(angle = 90),
+    legend.title = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    strip.text.x = element_text(size = 12, face = "bold")
+  )
+
+
+ggplotly(p, tooltip = c("x", "y", "colour")) %>%
+  layout(
+    legend = list(orientation = "v", y = 0.5),
+    margin = list(b = 100)
+  )
+```   
+ 
+### Throughput
+
+```{r, warning=FALSE, message=FALSE}
+library(ggplot2)
+library(plotly)
+
+t_throughput_ticket_team <- read.csv(here::here("Data", "t_throughput_ticket_team.csv"), stringsAsFactors = FALSE)
+
+p <- ggplot(t_throughput_ticket_team, aes(x = CLOSED_MONTH, y = THROUGHPUT, group = APPGROUP)) +
+  geom_line(aes(colour = APPGROUP)) +
+  facet_wrap(~ TICKET, nrow = 2) +
+  theme(
+    axis.text.x = element_text(angle = 90),
+    legend.title = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    strip.text.x = element_text(size = 12, face = "bold")
+  )
+
+
+ggplotly(p, tooltip = c("x", "y", "colour")) %>%
+  layout(
+    legend = list(orientation = "v", y = 0.5),
+    margin = list(b = 100)
+  )
+```    
+
+### Throughput time
+
+```{r, warning=FALSE, message=FALSE}
+library(ggplot2)
+library(plotly)
+
+t_throughputtime_ticket_team <- read.csv(here::here("Data", "t_throughputtime_ticket_team.csv"), stringsAsFactors = FALSE)
+
+p <- ggplot(t_throughputtime_ticket_team, aes(x = CLOSED_MONTH, y = THROUGHPUT_TIME, group = APPGROUP)) +
+  geom_line(aes(colour = APPGROUP)) +
+  facet_wrap(~ TICKET, nrow = 2) +
+  theme(
+    axis.text.x = element_text(angle = 90),
+    legend.title = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    strip.text.x = element_text(size = 12, face = "bold")
+  )
+
+
+ggplotly(p, tooltip = c("x", "y", "colour")) %>%
+  layout(
+    legend = list(orientation = "v", y = 0.5),
+    margin = list(b = 100)
+  )
+```
+ 
+### Resources
+    
+```{r}
+library(ggplot2)
+library(plotly)
+
+t_fte_ticket_team <- read.csv(here::here("Data", "t_fte_ticket_team.csv"), stringsAsFactors = FALSE)
+
+p <- ggplot(t_fte_ticket_team, aes(x = MONTH_WORKTIMESHEET, y = FTE, group = APPGROUP)) +
+  geom_line(aes(colour = APPGROUP)) +
+  facet_wrap(~ TICKET, nrow = 2) +
+  theme(
+    axis.text.x = element_text(angle = 90),
+    legend.title = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    strip.text.x = element_text(size = 12, face = "bold")
+  )
+
+ggplotly(p, tooltip = c("x", "y", "colour")) %>%
+  layout(
+    legend = list(orientation = "v", y = 0.5),
+    margin = list(b = 100)
+  )
+```
 
 
 
-Dev
+Efficiency
 ===================================== 
+
+Row 
+-------------------------------------
+
+### Normalized FTE (FTE/Ticket Count)
+
+```{r, warning=FALSE, message=FALSE}
+library(ggplot2)
+library(plotly)
+
+t_fte_ticket <- read.csv(here::here("Data", "t_fte_ticket.csv"), stringsAsFactors = FALSE)
+
+p <- ggplot(t_fte_ticket, aes(x = MONTH_WORKTIMESHEET, y = FTE_NORM, group = TICKET)) +
+  geom_line(aes(colour = TICKET)) +
+  theme(
+    axis.text.x = element_text(angle = 90),
+    legend.title = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank()
+  )
+
+ggplotly(p, tooltip = c("x", "y", "colour")) %>%
+  layout(
+    legend = list(orientation = "v", y = 0.5),
+    margin = list(b = 100)
+  )
+```
+
+
+
+### Normalized FTE per Team (FTE/Ticket Count)
+
+```{r, warning=FALSE, message=FALSE}
+library(ggplot2)
+library(plotly)
+
+t_fte_ticket_team <- read.csv(here::here("Data", "t_fte_ticket_team.csv"), stringsAsFactors = FALSE)
+
+p <- ggplot(t_fte_ticket_team, aes(x = MONTH_WORKTIMESHEET, y = FTE_NORM, group = APPGROUP)) +
+  geom_line(aes(colour = APPGROUP)) +
+  facet_grid(.~TICKET) +
+  theme(
+    axis.text.x = element_text(angle = 90),
+    legend.title = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    strip.text.x = element_text(size = 12, face = "bold")
+  )
+
+ggplotly(p, tooltip = c("x", "y", "colour")) %>%
+  layout(
+    legend = list(orientation = "v", y = 0.5, tracegroupgap = 1),
+    margin = list(b = 100)
+  )
+```
+
+

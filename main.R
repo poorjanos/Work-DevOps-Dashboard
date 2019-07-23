@@ -57,9 +57,10 @@ t_mnap <- t_mnap %>% mutate(IDOSZAK = ymd_hms(IDOSZAK))
 dbDisconnect(jdbcConnection)
 
 
-# Backlog Size ---------------------------------------------------------
-# Clean and add transformations
-message('Start clean backlog table')
+
+# Data Cleaning and Transformations ---------------------------------------
+# Backlog
+message('Start cleaning backlog table')
 t_backlog_tr <- t_backlog %>%
   filter(CLASS_SHORT %in% c("INC", "SDEV", "DEV", "RFC")) %>%
   mutate(
@@ -70,7 +71,7 @@ t_backlog_tr <- t_backlog %>%
     TICKET = case_when(
       CLASSIFICATION == "Adatkorrekció (RFC)" | CLASSIFICATION == "Adatlekérdezési igény (RFC)" ~ "Data correction/query",
       CLASS_SHORT == "INC" ~ "Defect",
-      CLASS_SHORT == "SDEV" | (CLASS_SHORT == "DEV" & VIP == 1) ~ "Development Small",
+      CLASS_SHORT == "SDEV" | (CLASS_SHORT == "DEV" & VIP == 1 & CREATED <= as.Date('2019-07-05')) ~ "Development Small",
       TRUE ~ "Development"
     ),
     APPGROUP = case_when(
@@ -84,7 +85,30 @@ t_backlog_tr <- t_backlog %>%
   )
 
 
+# FTE
+message('Start cleaning FTE table')
+t_fte_tr <- t_fte %>%
+  filter(CLASS_SHORT %in% c("INC", "SDEV", "DEV", "RFC")) %>%
+  mutate(
+    CREATED = ymd_hms(CREATED),
+    TICKET = case_when(
+      CLASSIFICATION == "Adatkorrekció (RFC)" | CLASSIFICATION == "Adatlekérdezési igény (RFC)" ~ "Data correction/query",
+      CLASS_SHORT == "INC" ~ "Defect",
+      CLASS_SHORT == "SDEV" | (CLASS_SHORT == "DEV" & VIP == 1 & CREATED <= as.Date('2019-07-05')) ~ "Development Small",
+      TRUE ~ "Development"
+    ),
+    APPGROUP = case_when(
+      stringr::str_detect(APPLICATION_GROUP_CONCAT, "/") ~ "Z_Közös",
+      TRUE ~ APPLICATION_GROUP_CONCAT
+    ),
+    APPSINGLE = case_when(
+      stringr::str_detect(APPLICATION, ";") ~ "Multiple",
+      TRUE ~ "Single"
+    )
+  )
 
+
+# Backlog Size ---------------------------------------------------------
 message("Start backlog aggregation for ticket types")
 t_cutpoints <- tibble(CUTPOINT = seq(floor_date(as.Date(ymd(Sys.Date()) - years(2)), unit = "month"), Sys.Date(), by = "1 month"))
 t_backlog_ticket <- get_backlog(t_backlog_tr, t_cutpoints, TICKET)
@@ -129,27 +153,6 @@ write.csv(t_throughputtime_ticket, here::here("Data", "t_throughputtime_ticket.c
 
 # FTE and Efficiency ------------------------------------------------------
 message("Start FTE aggregation for ticket types")
-# Clean and add transformations
-t_fte_tr <- t_fte %>%
-  filter(CLASS_SHORT %in% c("INC", "SDEV", "DEV", "RFC")) %>%
-  mutate(
-    CREATED = ymd_hms(CREATED),
-    TICKET = case_when(
-      CLASSIFICATION == "Adatkorrekció (RFC)" | CLASSIFICATION == "Adatlekérdezési igény (RFC)" ~ "Data correction/query",
-      CLASS_SHORT == "INC" ~ "Defect",
-      CLASS_SHORT == "SDEV" | (CLASS_SHORT == "DEV" & VIP == 1) ~ "Development Small",
-      TRUE ~ "Development"
-    ),
-    APPGROUP = case_when(
-      stringr::str_detect(APPLICATION_GROUP_CONCAT, "/") ~ "Z_Közös",
-      TRUE ~ APPLICATION_GROUP_CONCAT
-    ),
-    APPSINGLE = case_when(
-      stringr::str_detect(APPLICATION, ";") ~ "Multiple",
-      TRUE ~ "Single"
-    )
-  )
-
 t_fte_ticket <- t_fte_tr %>%
   filter(!is.na(MONTH_WORKTIMESHEET)) %>%
   mutate(MONTH_WORKTIMESHEET = ymd_hms(MONTH_WORKTIMESHEET)) %>% 
@@ -166,4 +169,71 @@ t_fte_ticket <- t_fte_tr %>%
 write.csv(t_fte_ticket, here::here("Data", "t_fte_ticket.csv"), row.names = FALSE)
   
   
-  
+
+
+# Teams Backlog -----------------------------------------------------------
+message("Start team backlog aggregation for ticket types")
+t_backlog_ticket_team <- get_backlog(t_backlog_tr, t_cutpoints, TICKET, APPGROUP)
+
+write.csv(t_backlog_ticket_team, here::here("Data", "t_backlog_ticket_team.csv"), row.names = FALSE)
+
+
+
+
+# Teams Throughput --------------------------------------------------------
+message("Start team throughput aggregation for ticket types")
+t_throughput_ticket_team <- t_backlog_tr %>%
+  # Transform data
+  filter(!is.na(CLOSED)) %>%
+  filter(CLOSED >= floor_date(ymd(Sys.Date()) - years(2), unit = "month") &
+           CLOSED < floor_date(ymd(Sys.Date()), unit = "month")) %>%
+  mutate(CLOSED_MONTH = as.Date(floor_date(CLOSED, unit = "month"))) %>%
+  group_by(CLOSED_MONTH, TICKET, APPGROUP) %>%
+  summarize(THROUGHPUT = n()) %>%
+  ungroup()
+
+write.csv(t_throughput_ticket_team, here::here("Data", "t_throughput_ticket_team.csv"), row.names = FALSE)
+
+
+
+
+# Teams Throughput Time ---------------------------------------------------
+message("Start team throughput time aggregation for ticket types")
+t_throughputtime_ticket_team <- t_backlog_tr %>%
+  # Transform data
+  filter(!is.na(CLOSED)) %>%
+  filter(CLOSED >= floor_date(ymd(Sys.Date()) - years(2), unit = "month") &
+           CLOSED < floor_date(ymd(Sys.Date()), unit = "month")) %>%
+  mutate(CLOSED_MONTH = as.Date(floor_date(CLOSED, unit = "month")),
+         THROUGHPUT_TIME = difftime(CLOSED, CREATED ,units="days")) %>%
+  group_by(CLOSED_MONTH, TICKET, APPGROUP) %>%
+  summarize(THROUGHPUT_TIME = round(median(THROUGHPUT_TIME), 1)) %>%
+  ungroup()
+
+write.csv(t_throughputtime_ticket_team, here::here("Data", "t_throughputtime_ticket_team.csv"), row.names = FALSE)
+
+
+
+
+# Teams Resources ---------------------------------------------------------
+message("Start team resources aggregation for ticket types")
+t_fte_ticket_team <- t_fte_tr %>%
+  filter(!is.na(MONTH_WORKTIMESHEET)) %>%
+  mutate(MONTH_WORKTIMESHEET = ymd_hms(MONTH_WORKTIMESHEET)) %>% 
+  filter(MONTH_WORKTIMESHEET >= floor_date(ymd(Sys.Date()) - years(2), unit = "month") &
+           MONTH_WORKTIMESHEET < floor_date(ymd(Sys.Date()), unit = "month")) %>%
+  group_by(MONTH_WORKTIMESHEET, TICKET, APPGROUP) %>% 
+  summarize(HOURS_WORKTIMESHEET = sum(HOURS_WORKTIMESHEET),
+            TICKET_NUM = n()) %>% 
+  ungroup() %>% 
+  left_join(t_mnap, by = c("MONTH_WORKTIMESHEET" = "IDOSZAK")) %>% 
+  mutate(FTE = round(HOURS_WORKTIMESHEET/7/MNAP, 2),
+         FTE_NORM = round(FTE/TICKET_NUM, 2)) 
+
+write.csv(t_fte_ticket_team, here::here("Data", "t_fte_ticket_team.csv"), row.names = FALSE)
+
+
+
+
+
+
