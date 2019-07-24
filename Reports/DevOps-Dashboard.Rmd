@@ -98,7 +98,7 @@ ggplotly(p, tooltip = c("x", "y", "colour")) %>%
 ```
 
 
-### Resources (Consumed FTE in Month)
+### Resources (Consumed FTE/Month for AegonHU [not only DevOps!])
 
 ```{r, warning=FALSE, message=FALSE}
 library(ggplot2)
@@ -211,7 +211,7 @@ ggplotly(p, tooltip = c("x", "y", "colour")) %>%
   )
 ```
  
-### Resources
+### Resources (FTE for AegonHU divisions)
     
 ```{r}
 library(ggplot2)
@@ -219,8 +219,8 @@ library(plotly)
 
 t_fte_ticket_team <- read.csv(here::here("Data", "t_fte_ticket_team.csv"), stringsAsFactors = FALSE)
 
-p <- ggplot(t_fte_ticket_team, aes(x = MONTH_WORKTIMESHEET, y = FTE, group = APPGROUP)) +
-  geom_line(aes(colour = APPGROUP)) +
+p <- ggplot(t_fte_ticket_team, aes(x = MONTH_WORKTIMESHEET, y = FTE, group = USERORG_WORKTIMESHEET)) +
+  geom_line(aes(colour = USERORG_WORKTIMESHEET)) +
   facet_wrap(~ TICKET, nrow = 2) +
   theme(
     axis.text.x = element_text(angle = 90),
@@ -279,8 +279,8 @@ library(plotly)
 
 t_fte_ticket_team <- read.csv(here::here("Data", "t_fte_ticket_team.csv"), stringsAsFactors = FALSE)
 
-p <- ggplot(t_fte_ticket_team, aes(x = MONTH_WORKTIMESHEET, y = FTE_NORM, group = APPGROUP)) +
-  geom_line(aes(colour = APPGROUP)) +
+p <- ggplot(t_fte_ticket_team, aes(x = MONTH_WORKTIMESHEET, y = FTE_NORM, group = USERORG_WORKTIMESHEET)) +
+  geom_line(aes(colour = USERORG_WORKTIMESHEET)) +
   facet_grid(.~TICKET) +
   theme(
     axis.text.x = element_text(angle = 90),

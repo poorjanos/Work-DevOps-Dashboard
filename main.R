@@ -222,7 +222,7 @@ t_fte_ticket_team <- t_fte_tr %>%
   mutate(MONTH_WORKTIMESHEET = ymd_hms(MONTH_WORKTIMESHEET)) %>% 
   filter(MONTH_WORKTIMESHEET >= floor_date(ymd(Sys.Date()) - years(2), unit = "month") &
            MONTH_WORKTIMESHEET < floor_date(ymd(Sys.Date()), unit = "month")) %>%
-  group_by(MONTH_WORKTIMESHEET, TICKET, APPGROUP) %>% 
+  group_by(MONTH_WORKTIMESHEET, TICKET, USERORG_WORKTIMESHEET) %>% 
   summarize(HOURS_WORKTIMESHEET = sum(HOURS_WORKTIMESHEET),
             TICKET_NUM = n()) %>% 
   ungroup() %>% 

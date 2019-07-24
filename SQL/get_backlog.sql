@@ -54,7 +54,7 @@ SELECT   DISTINCT
                       ON case_closed.OID = status.OID
               WHERE   REGEXP_LIKE (
                          case_closed.ISSUESTATENEW,
-                         '^#01.*|^#29.*|^20.*|^22.*|^24.*|^H08.*|^H14.*|^H10.*|^H11.*|^H09.*|^H12.*|^H13.*'
+                         '^#01.*|^#29.*|^20.*|^21.*|^22.*|^23.*|^24.*|^H08.*|^H14.*|^H10.*|^H11.*|^H09.*|^H12.*|^H13.*|^S31.*'
                       )
                       AND status.MODIFIEDDATE =
                             (                     /* get date of end status */
