@@ -2,7 +2,7 @@
 title: "DevOps Dashboard BETA"
 output: 
   flexdashboard::flex_dashboard:
-    orientation: columns
+    orientation: rows
     vertical_layout: fill
 ---
 
@@ -10,13 +10,40 @@ output:
 library(flexdashboard)
 ```
 
-Process
+Volumes
 ===================================== 
 
 Row 
 -------------------------------------
 
-### Backlog Size (Number of Open Tickets on First Day of Month)
+### New Ticket Count (Number of Created Tickets in Month)
+
+```{r, warning=FALSE, message=FALSE}
+library(ggplot2)
+library(plotly)
+
+t_nb_ticket <- read.csv(here::here("Data", "t_nb_ticket.csv"), stringsAsFactors = FALSE)
+
+p <- ggplot(t_nb_ticket, aes(x = CREATED_MONTH, y = NEW_TICKET, group = TICKET)) +
+  geom_line(aes(colour = TICKET)) +
+  theme(
+    axis.text.x = element_text(angle = 90),
+    legend.title = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank()
+  )
+
+
+ggplotly(p, tooltip = c("x", "y", "colour")) %>%
+  layout(
+    legend = list(orientation = "v", y = 0.5),
+    margin = list(b = 100)
+  )
+```
+
+
+
+### Backlog Count (Number of Open Tickets on First Day of Month)
 
 ```{r, warning=FALSE, message=FALSE}
 library(ggplot2)
@@ -25,6 +52,36 @@ library(plotly)
 t_backlog_ticket <- read.csv(here::here("Data", "t_backlog_ticket.csv"), stringsAsFactors = FALSE)
 
 p <- ggplot(t_backlog_ticket, aes(x = CUTPOINT, y = BACKLOG, group = TICKET)) +
+  geom_line(aes(colour = TICKET)) +
+  theme(
+    axis.text.x = element_text(angle = 90),
+    legend.title = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank()
+  )
+
+
+ggplotly(p, tooltip = c("x", "y", "colour")) %>%
+  layout(
+    legend = list(orientation = "v", y = 0.5),
+    margin = list(b = 100)
+  )
+```
+
+
+
+Row 
+-------------------------------------
+
+### Throughput Count (Number of Closed Tickets in Month)
+
+```{r, warning=FALSE, message=FALSE}
+library(ggplot2)
+library(plotly)
+
+t_throughput_ticket <- read.csv(here::here("Data", "t_throughput_ticket.csv"), stringsAsFactors = FALSE)
+
+p <- ggplot(t_throughput_ticket, aes(x = CLOSED_MONTH, y = THROUGHPUT, group = TICKET)) +
   geom_line(aes(colour = TICKET)) +
   theme(
     axis.text.x = element_text(angle = 90),
@@ -69,36 +126,14 @@ ggplotly(p, tooltip = c("x", "y", "colour")) %>%
 ```
 
 
-Row 
+
+FTE
+===================================== 
+
+Row
 -------------------------------------
 
-### Throughput (Number of Closed Tickets in Month)
-
-```{r, warning=FALSE, message=FALSE}
-library(ggplot2)
-library(plotly)
-
-t_throughput_ticket <- read.csv(here::here("Data", "t_throughput_ticket.csv"), stringsAsFactors = FALSE)
-
-p <- ggplot(t_throughput_ticket, aes(x = CLOSED_MONTH, y = THROUGHPUT, group = TICKET)) +
-  geom_line(aes(colour = TICKET)) +
-  theme(
-    axis.text.x = element_text(angle = 90),
-    legend.title = element_blank(),
-    axis.title.x = element_blank(),
-    axis.title.y = element_blank()
-  )
-
-
-ggplotly(p, tooltip = c("x", "y", "colour")) %>%
-  layout(
-    legend = list(orientation = "v", y = 0.5),
-    margin = list(b = 100)
-  )
-```
-
-
-### Resources (Consumed FTE/Month for AegonHU [not only DevOps!])
+### FTE
 
 ```{r, warning=FALSE, message=FALSE}
 library(ggplot2)
@@ -124,12 +159,128 @@ ggplotly(p, tooltip = c("x", "y", "colour")) %>%
 
 
 
+### FTE/Ticket
+
+```{r, warning=FALSE, message=FALSE}
+library(ggplot2)
+library(plotly)
+
+t_fte_ticket <- read.csv(here::here("Data", "t_fte_ticket.csv"), stringsAsFactors = FALSE)
+
+p <- ggplot(t_fte_ticket, aes(x = MONTH_WORKTIMESHEET, y = FTE_NORM, group = TICKET)) +
+  geom_line(aes(colour = TICKET)) +
+  theme(
+    axis.text.x = element_text(angle = 90),
+    legend.title = element_blank(),
+    axis.title.y = element_blank(),
+    axis.title.x = element_blank()
+  ) 
+
+ggplotly(p, tooltip = c("x", "y", "colour")) %>%
+  layout(
+    legend = list(orientation = "v", y = 0.5),
+    margin = list(b = 100)
+  )
+```
+
+
+
+
+Row
+-------------------------------------
+
+### Development FTE (DEV, SDEV, RFC)
+
+```{r, warning=FALSE, message=FALSE}
+library(ggplot2)
+library(plotly)
+
+t_fte_phases <- read.csv(here::here("Data", "t_fte_phases.csv"), stringsAsFactors = FALSE)
+
+p <- ggplot(t_fte_phases, aes(x = MONTH_WORKTIMESHEET, y = FTE, group = FTE_BREAKDOWN)) +
+  geom_line(aes(colour = FTE_BREAKDOWN)) +
+  #facet_grid(.~TICKET) +
+  theme(
+    axis.text.x = element_text(angle = 90),
+    legend.title = element_blank(),
+    axis.title.y = element_blank(),
+    axis.title.x = element_blank()
+  )
+
+ggplotly(p, tooltip = c("x", "y", "colour")) %>%
+  layout(
+    legend = list(orientation = "v", y = 0.5),
+    margin = list(b = 100)
+  )
+```
+
+
+
+
+### Development FTE/Ticket (DEV, SDEV, RFC)
+
+```{r, warning=FALSE, message=FALSE}
+library(ggplot2)
+library(plotly)
+
+t_fte_phases <- read.csv(here::here("Data", "t_fte_phases.csv"), stringsAsFactors = FALSE)
+
+p <- ggplot(t_fte_phases, aes(x = MONTH_WORKTIMESHEET, y = FTE_NORM, group = FTE_BREAKDOWN)) +
+  geom_line(aes(colour = FTE_BREAKDOWN)) +
+  #facet_grid(.~TICKET) +
+  theme(
+    axis.text.x = element_text(angle = 90),
+    legend.title = element_blank(),
+    axis.title.y = element_blank(),
+    axis.title.x = element_blank()
+  )
+
+ggplotly(p, tooltip = c("x", "y", "colour")) %>%
+  layout(
+    legend = list(orientation = "v", y = 0.5),
+    margin = list(b = 100)
+  )
+```
+
+
+
 Teams
 ===================================== 
 
 Column {.tabset}
 -------------------------------------
    
+
+### New Ticket
+
+```{r, warning=FALSE, message=FALSE}
+library(ggplot2)
+library(plotly)
+
+t_nb_ticket_team <- read.csv(here::here("Data", "t_nb_ticket_team.csv"), stringsAsFactors = FALSE)
+
+p <- ggplot(t_nb_ticket_team, aes(x = CREATED_MONTH, y = NEW_TICKET, group = APPGROUP)) +
+  geom_line(aes(colour = APPGROUP)) +
+  facet_grid(.~TICKET) +
+  theme(
+    axis.text.x = element_text(angle = 90),
+    legend.title = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    strip.text.x = element_text(size = 12, face = "bold")
+  )
+
+
+ggplotly(p, tooltip = c("x", "y", "colour")) %>%
+  layout(
+    legend = list(orientation = "v", y = 0.5),
+    margin = list(b = 100)
+  )
+```    
+
+
+
+
 ### Backlog
 
 ```{r, warning=FALSE, message=FALSE}
@@ -140,7 +291,7 @@ t_backlog_ticket_team <- read.csv(here::here("Data", "t_backlog_ticket_team.csv"
 
 p <- ggplot(t_backlog_ticket_team, aes(x = CUTPOINT, y = BACKLOG, group = APPGROUP)) +
   geom_line(aes(colour = APPGROUP)) +
-  facet_wrap(~ TICKET, nrow = 2) +
+  facet_grid(.~TICKET) +
   theme(
     axis.text.x = element_text(angle = 90),
     legend.title = element_blank(),
@@ -167,7 +318,7 @@ t_throughput_ticket_team <- read.csv(here::here("Data", "t_throughput_ticket_tea
 
 p <- ggplot(t_throughput_ticket_team, aes(x = CLOSED_MONTH, y = THROUGHPUT, group = APPGROUP)) +
   geom_line(aes(colour = APPGROUP)) +
-  facet_wrap(~ TICKET, nrow = 2) +
+  facet_grid(.~TICKET) +
   theme(
     axis.text.x = element_text(angle = 90),
     legend.title = element_blank(),
@@ -194,7 +345,7 @@ t_throughputtime_ticket_team <- read.csv(here::here("Data", "t_throughputtime_ti
 
 p <- ggplot(t_throughputtime_ticket_team, aes(x = CLOSED_MONTH, y = THROUGHPUT_TIME, group = APPGROUP)) +
   geom_line(aes(colour = APPGROUP)) +
-  facet_wrap(~ TICKET, nrow = 2) +
+  facet_grid(.~TICKET) +
   theme(
     axis.text.x = element_text(angle = 90),
     legend.title = element_blank(),
@@ -211,7 +362,7 @@ ggplotly(p, tooltip = c("x", "y", "colour")) %>%
   )
 ```
  
-### Resources (FTE for AegonHU divisions)
+### FTE
     
 ```{r}
 library(ggplot2)
@@ -221,7 +372,7 @@ t_fte_ticket_team <- read.csv(here::here("Data", "t_fte_ticket_team.csv"), strin
 
 p <- ggplot(t_fte_ticket_team, aes(x = MONTH_WORKTIMESHEET, y = FTE, group = USERORG_WORKTIMESHEET)) +
   geom_line(aes(colour = USERORG_WORKTIMESHEET)) +
-  facet_wrap(~ TICKET, nrow = 2) +
+  facet_grid(.~TICKET) +
   theme(
     axis.text.x = element_text(angle = 90),
     legend.title = element_blank(),
@@ -239,39 +390,7 @@ ggplotly(p, tooltip = c("x", "y", "colour")) %>%
 
 
 
-Efficiency
-===================================== 
-
-Row 
--------------------------------------
-
-### Normalized FTE (FTE/Ticket Count)
-
-```{r, warning=FALSE, message=FALSE}
-library(ggplot2)
-library(plotly)
-
-t_fte_ticket <- read.csv(here::here("Data", "t_fte_ticket.csv"), stringsAsFactors = FALSE)
-
-p <- ggplot(t_fte_ticket, aes(x = MONTH_WORKTIMESHEET, y = FTE_NORM, group = TICKET)) +
-  geom_line(aes(colour = TICKET)) +
-  theme(
-    axis.text.x = element_text(angle = 90),
-    legend.title = element_blank(),
-    axis.title.x = element_blank(),
-    axis.title.y = element_blank()
-  )
-
-ggplotly(p, tooltip = c("x", "y", "colour")) %>%
-  layout(
-    legend = list(orientation = "v", y = 0.5),
-    margin = list(b = 100)
-  )
-```
-
-
-
-### Normalized FTE per Team (FTE/Ticket Count)
+### FTE/Ticket
 
 ```{r, warning=FALSE, message=FALSE}
 library(ggplot2)
@@ -285,6 +404,34 @@ p <- ggplot(t_fte_ticket_team, aes(x = MONTH_WORKTIMESHEET, y = FTE_NORM, group 
   theme(
     axis.text.x = element_text(angle = 90),
     legend.title = element_blank(),
+    axis.title.y = element_blank(),
+    axis.title.x = element_blank(),
+    strip.text.x = element_text(size = 12, face = "bold")
+  )
+
+ggplotly(p, tooltip = c("x", "y", "colour")) %>%
+  layout(
+    legend = list(orientation = "v", y = 0.5),
+    margin = list(b = 100)
+  )
+```
+
+
+
+### Development FTE
+    
+```{r}
+library(ggplot2)
+library(plotly)
+
+t_fte_phases_team <- read.csv(here::here("Data", "t_fte_phases_team.csv"), stringsAsFactors = FALSE)
+
+p <- ggplot(t_fte_phases_team, aes(x = MONTH_WORKTIMESHEET, y = FTE, group = USERORG_WORKTIMESHEET)) +
+  geom_line(aes(colour = USERORG_WORKTIMESHEET)) +
+  facet_grid(.~FTE_BREAKDOWN) +
+  theme(
+    axis.text.x = element_text(angle = 90),
+    legend.title = element_blank(),
     axis.title.x = element_blank(),
     axis.title.y = element_blank(),
     strip.text.x = element_text(size = 12, face = "bold")
@@ -292,9 +439,75 @@ p <- ggplot(t_fte_ticket_team, aes(x = MONTH_WORKTIMESHEET, y = FTE_NORM, group 
 
 ggplotly(p, tooltip = c("x", "y", "colour")) %>%
   layout(
-    legend = list(orientation = "v", y = 0.5, tracegroupgap = 1),
+    legend = list(orientation = "v", y = 0.5),
     margin = list(b = 100)
   )
 ```
 
 
+
+### Development FTE/Ticket
+    
+```{r}
+library(ggplot2)
+library(plotly)
+
+t_fte_phases_team <- read.csv(here::here("Data", "t_fte_phases_team.csv"), stringsAsFactors = FALSE)
+
+p <- ggplot(t_fte_phases_team, aes(x = MONTH_WORKTIMESHEET, y = FTE_NORM, group = USERORG_WORKTIMESHEET)) +
+  geom_line(aes(colour = USERORG_WORKTIMESHEET)) +
+  facet_grid(.~FTE_BREAKDOWN) +
+  theme(
+    axis.text.x = element_text(angle = 90),
+    legend.title = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    strip.text.x = element_text(size = 12, face = "bold")
+  )
+
+ggplotly(p, tooltip = c("x", "y", "colour")) %>%
+  layout(
+    legend = list(orientation = "v", y = 0.5),
+    margin = list(b = 100)
+  )
+```
+
+
+
+Leader Board
+===================================== 
+
+Column {.tabset}
+-------------------------------------
+
+### Longest Open Tickets
+```{r}
+library(kableExtra)
+
+t_lb_tp_open <- read.csv(here::here("Data", "t_lb_tp_open.csv"), stringsAsFactors = FALSE)
+
+t_lb_tp_open %>%
+  select(-TICKET) %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), full_width = F, fixed_thead = T) %>%
+  pack_rows(t_lb_tp_open[1, 1], 1, 10, label_row_css = "background-color: #666; color: #fff;") %>%
+  pack_rows(t_lb_tp_open[11, 1], 11, 20, label_row_css = "background-color: #666; color: #fff;") %>%
+  pack_rows(t_lb_tp_open[21, 1], 21, 30, label_row_css = "background-color: #666; color: #fff;") %>%
+  pack_rows(t_lb_tp_open[31, 1], 31, 40, label_row_css = "background-color: #666; color: #fff;")
+```
+
+
+
+### Longest Open Tickets
+```{r}
+library(kableExtra)
+
+t_lb_tp_open <- read.csv(here::here("Data", "t_lb_tp_open.csv"), stringsAsFactors = FALSE)
+
+kable(t_lb_tp_open) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), full_width = F, fixed_thead = T) %>% 
+  pack_rows("Group 1", 1, 10) %>%
+  pack_rows("Group 2", 11, 20) %>% 
+  pack_rows("Group 3", 21, 30) %>% 
+  pack_rows("Group 2", 31, 40)
+```
