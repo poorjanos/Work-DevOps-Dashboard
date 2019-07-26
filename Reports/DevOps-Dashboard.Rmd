@@ -2,7 +2,6 @@
 title: "DevOps Dashboard BETA"
 output: 
   flexdashboard::flex_dashboard:
-    orientation: rows
     vertical_layout: fill
 ---
 
@@ -13,7 +12,7 @@ library(flexdashboard)
 Volumes
 ===================================== 
 
-Row 
+Column 
 -------------------------------------
 
 ### New Ticket Count (Number of Created Tickets in Month)
@@ -43,15 +42,15 @@ ggplotly(p, tooltip = c("x", "y", "colour")) %>%
 
 
 
-### Backlog Count (Number of Open Tickets on First Day of Month)
+### Throughput Count (Number of Closed Tickets in Month)
 
 ```{r, warning=FALSE, message=FALSE}
 library(ggplot2)
 library(plotly)
 
-t_backlog_ticket <- read.csv(here::here("Data", "t_backlog_ticket.csv"), stringsAsFactors = FALSE)
+t_throughput_ticket <- read.csv(here::here("Data", "t_throughput_ticket.csv"), stringsAsFactors = FALSE)
 
-p <- ggplot(t_backlog_ticket, aes(x = CUTPOINT, y = BACKLOG, group = TICKET)) +
+p <- ggplot(t_throughput_ticket, aes(x = CLOSED_MONTH, y = THROUGHPUT, group = TICKET)) +
   geom_line(aes(colour = TICKET)) +
   theme(
     axis.text.x = element_text(angle = 90),
@@ -70,18 +69,18 @@ ggplotly(p, tooltip = c("x", "y", "colour")) %>%
 
 
 
-Row 
+Column 
 -------------------------------------
 
-### Throughput Count (Number of Closed Tickets in Month)
+### Backlog Count (Number of Open Tickets on First Day of Month)
 
 ```{r, warning=FALSE, message=FALSE}
 library(ggplot2)
 library(plotly)
 
-t_throughput_ticket <- read.csv(here::here("Data", "t_throughput_ticket.csv"), stringsAsFactors = FALSE)
+t_backlog_ticket <- read.csv(here::here("Data", "t_backlog_ticket.csv"), stringsAsFactors = FALSE)
 
-p <- ggplot(t_throughput_ticket, aes(x = CLOSED_MONTH, y = THROUGHPUT, group = TICKET)) +
+p <- ggplot(t_backlog_ticket, aes(x = CUTPOINT, y = BACKLOG, group = TICKET)) +
   geom_line(aes(colour = TICKET)) +
   theme(
     axis.text.x = element_text(angle = 90),
@@ -130,7 +129,7 @@ ggplotly(p, tooltip = c("x", "y", "colour")) %>%
 FTE
 ===================================== 
 
-Row
+Column
 -------------------------------------
 
 ### FTE
@@ -159,36 +158,6 @@ ggplotly(p, tooltip = c("x", "y", "colour")) %>%
 
 
 
-### FTE/Ticket
-
-```{r, warning=FALSE, message=FALSE}
-library(ggplot2)
-library(plotly)
-
-t_fte_ticket <- read.csv(here::here("Data", "t_fte_ticket.csv"), stringsAsFactors = FALSE)
-
-p <- ggplot(t_fte_ticket, aes(x = MONTH_WORKTIMESHEET, y = FTE_NORM, group = TICKET)) +
-  geom_line(aes(colour = TICKET)) +
-  theme(
-    axis.text.x = element_text(angle = 90),
-    legend.title = element_blank(),
-    axis.title.y = element_blank(),
-    axis.title.x = element_blank()
-  ) 
-
-ggplotly(p, tooltip = c("x", "y", "colour")) %>%
-  layout(
-    legend = list(orientation = "v", y = 0.5),
-    margin = list(b = 100)
-  )
-```
-
-
-
-
-Row
--------------------------------------
-
 ### Development FTE (DEV, SDEV, RFC)
 
 ```{r, warning=FALSE, message=FALSE}
@@ -214,6 +183,34 @@ ggplotly(p, tooltip = c("x", "y", "colour")) %>%
   )
 ```
 
+
+
+Column
+-------------------------------------
+
+### FTE/Ticket
+
+```{r, warning=FALSE, message=FALSE}
+library(ggplot2)
+library(plotly)
+
+t_fte_ticket <- read.csv(here::here("Data", "t_fte_ticket.csv"), stringsAsFactors = FALSE)
+
+p <- ggplot(t_fte_ticket, aes(x = MONTH_WORKTIMESHEET, y = FTE_NORM, group = TICKET)) +
+  geom_line(aes(colour = TICKET)) +
+  theme(
+    axis.text.x = element_text(angle = 90),
+    legend.title = element_blank(),
+    axis.title.y = element_blank(),
+    axis.title.x = element_blank()
+  ) 
+
+ggplotly(p, tooltip = c("x", "y", "colour")) %>%
+  layout(
+    legend = list(orientation = "v", y = 0.5),
+    margin = list(b = 100)
+  )
+```
 
 
 
@@ -474,6 +471,79 @@ ggplotly(p, tooltip = c("x", "y", "colour")) %>%
 
 
 
+Conformance
+===================================== 
+
+Column
+-------------------------------------
+
+### Conform Ticket Count by Create Month (Closed Development [DEV] and Development Small [DEV-VIP, SDEV] Tickets)
+```{r, warning=FALSE, message=FALSE}
+library(ggplot2)
+library(plotly)
+
+t_conf_agg <- read.csv(here::here("Data", "t_conf_agg.csv"), stringsAsFactors = FALSE)
+
+p <- ggplot(t_conf_agg, aes(x = CREATED_MONTH, y = COUNT, fill = CONFORM)) +
+  geom_bar(stat = "identity") +
+  facet_grid(.~TICKET) +
+  theme(
+    axis.text.x = element_text(angle = 90),
+    legend.title = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank()
+  )
+
+ggplotly(p, tooltip = c("x", "y")) %>%
+  layout(
+    legend = list(orientation = "v", y = 0.5),
+    margin = list(b = 100)
+  )
+```    
+
+### Conform Ticket **Cumulative** Count by Create Month (Closed Development [DEV] and Development Small [DEV-VIP, SDEV] Tickets)
+
+```{r, warning=FALSE, message=FALSE}
+library(ggplot2)
+library(plotly)
+
+t_conf_agg <- read.csv(here::here("Data", "t_conf_agg.csv"), stringsAsFactors = FALSE)
+
+p <- ggplot(t_conf_agg, aes(x = CREATED_MONTH, y = CUMULATIVE_COUNT, fill = CONFORM)) +
+  geom_bar(stat = "identity") +
+  facet_grid(.~TICKET) +
+  theme(
+    axis.text.x = element_text(angle = 90),
+    legend.title = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank()
+  )
+
+ggplotly(p, tooltip = c("x", "y")) %>%
+  layout(
+    legend = list(orientation = "v", y = 0.5),
+    margin = list(b = 100)
+  )
+```    
+
+Column
+-------------------------------------
+
+### Conformance Criteria (Closed Development [DEV] and Development Small [DEV-VIP, SDEV] Tickets)
+```{r, warning=FALSE, message=FALSE}
+library(DT)
+
+t_conf <- read.csv(here::here("Data", "t_conf.csv"), stringsAsFactors = FALSE)
+
+datatable(t_conf, rownames = FALSE, extensions = "Buttons", options = list(
+  dom = "Bfrtip",
+  buttons = list("excel", "csv")
+))# %>%
+  #formatStyle(colnames(t_conf), fontSize = "70%")
+```    
+
+
+
 Leader Board
 ===================================== 
 
@@ -498,16 +568,18 @@ t_lb_tp_open %>%
 
 
 
-### Longest Open Tickets
+### Highest FTE Open Tickets
 ```{r}
 library(kableExtra)
 
-t_lb_tp_open <- read.csv(here::here("Data", "t_lb_tp_open.csv"), stringsAsFactors = FALSE)
+t_lb_fte_open <- read.csv(here::here("Data", "t_lb_fte_open.csv"), stringsAsFactors = FALSE)
 
-kable(t_lb_tp_open) %>%
+t_lb_fte_open %>% 
+  select(-TICKET) %>%
+  kable() %>% 
   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), full_width = F, fixed_thead = T) %>% 
-  pack_rows("Group 1", 1, 10) %>%
-  pack_rows("Group 2", 11, 20) %>% 
-  pack_rows("Group 3", 21, 30) %>% 
-  pack_rows("Group 2", 31, 40)
+  pack_rows(t_lb_fte_open[1, 1], 1, 10, label_row_css = "background-color: #666; color: #fff;") %>%
+  pack_rows(t_lb_fte_open[11, 1], 11, 20, label_row_css = "background-color: #666; color: #fff;") %>%
+  pack_rows(t_lb_fte_open[21, 1], 21, 30, label_row_css = "background-color: #666; color: #fff;") %>%
+  pack_rows(t_lb_fte_open[31, 1], 31, 40, label_row_css = "background-color: #666; color: #fff;")
 ```

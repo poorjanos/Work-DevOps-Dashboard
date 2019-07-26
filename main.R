@@ -356,14 +356,14 @@ message("Start Leader Board Throughput Closed aggregation for tickets")
 t_lb_tp_open <- t_backlog_tr %>% 
   filter(is.na(CLOSED)) %>% 
   filter(!is.na(LAST_EVENT)) %>% 
-  select(CASE, ISSUE_TITLE, CREATED, TICKET, LAST_EVENT, LAST_EVENT_DATE) %>% 
+  select(CASE, ISSUE_TITLE, CREATED, TICKET, LAST_EVENT, LAST_EVENT_DATE, APPGROUP) %>% 
   mutate(DAYS_OPEN = difftime(Sys.Date(), CREATED, units="days")) %>% 
   group_by(TICKET) %>% 
   top_n(10, DAYS_OPEN) %>% 
   ungroup() %>% 
   mutate(DAYS_OPEN = round(DAYS_OPEN, 0)) %>% 
   arrange(TICKET, desc(DAYS_OPEN)) %>% 
-  select(TICKET, CASE, ISSUE_TITLE, DAYS_OPEN, CREATED, LAST_EVENT, LAST_EVENT_DATE)
+  select(TICKET, CASE, ISSUE_TITLE, CREATED, TEAM = APPGROUP, DAYS_OPEN, LAST_EVENT, LAST_EVENT_DATE)
 
 write.csv(t_lb_tp_open, here::here("Data", "t_lb_tp_open.csv"), row.names = FALSE)
 
@@ -371,16 +371,65 @@ write.csv(t_lb_tp_open, here::here("Data", "t_lb_tp_open.csv"), row.names = FALS
 
 # Leader Board FTE  ------------------------------------------
 message("Start Leader Board FTE aggregation for tickets")
-t_lb_tp_open <- t_backlog_tr %>% 
+t_lb_fte_open <- t_fte_tr %>% 
   filter(is.na(CLOSED)) %>% 
-  filter(!is.na(LAST_EVENT)) %>% 
-  select(CASE, ISSUE_TITLE, CREATED, TICKET, LAST_EVENT, LAST_EVENT_DATE) %>% 
-  mutate(DAYS_OPEN = difftime(Sys.Date(), CREATED, units="days")) %>% 
+  group_by(TICKET, CASE, ISSUE_TITLE, CREATED, TEAM = APPGROUP) %>% 
+  summarize(TOTAL_HOURS = sum(HOURS_WORKTIMESHEET)) %>% 
+  ungroup() %>%
+  mutate(MONTHS_OPEN = as.numeric(difftime(Sys.Date(), CREATED, units= "days") / 30),
+         FTE_PER_MONTH = round(TOTAL_HOURS/MONTHS_OPEN/7/21, 2)) %>% 
   group_by(TICKET) %>% 
-  top_n(10, DAYS_OPEN) %>% 
+  top_n(10, TOTAL_HOURS) %>% 
   ungroup() %>% 
-  mutate(DAYS_OPEN = round(DAYS_OPEN, 0)) %>% 
-  arrange(TICKET, desc(DAYS_OPEN)) %>% 
-  select(TICKET, CASE, ISSUE_TITLE, DAYS_OPEN, CREATED, LAST_EVENT, LAST_EVENT_DATE)
+  mutate(TOTAL_HOURS = round(TOTAL_HOURS, 0)) %>% 
+  arrange(TICKET, desc(TOTAL_HOURS)) %>% 
+  select(-MONTHS_OPEN)
 
-write.csv(t_lb_tp_open, here::here("Data", "t_lb_tp_open.csv"), row.names = FALSE)
+write.csv(t_lb_fte_open, here::here("Data", "t_lb_fte_open.csv"), row.names = FALSE)
+
+
+
+
+# Conformance Analysis Issue List -----------------------------------------
+message("Start Conformance Analysis issue list")
+t_conf <- t_backlog_tr %>%
+  filter(!is.na(CLOSED) & TICKET %in% c("Development", "Development Small") & CLASS_SHORT != "RFC") %>%
+  select(CASE, ISSUE_TITLE, APPLICATION, CREATED, CLOSED, TICKET, CLASS_SHORT, DISTINCT_STEPS, ADMIN_STEP, APPGROUP) %>%
+  tidyr::replace_na(list(ADMIN_STEP = "N")) %>%
+  mutate(STEP_NUM_OK = case_when(
+    TICKET == "Development" & DISTINCT_STEPS < 30 ~ "N",
+    TICKET == "Development Small" & CLASS_SHORT == "DEV" & DISTINCT_STEPS < 25 ~ "N",
+    TICKET == "Development Small" & CLASS_SHORT == "SDEV" & DISTINCT_STEPS < 17 ~ "N",
+    TRUE ~ "I"
+  )) %>%
+  mutate(CONFORM = case_when(
+    APPLICATION == "ISD" & STEP_NUM_OK == "I" ~ "CONFORM",
+    STEP_NUM_OK == "N" | ADMIN_STEP == "I" ~ "DEVIANT",
+    TRUE ~ "CONFORM"
+  )) %>%
+  arrange(TICKET, CREATED) %>%
+  select(TICKET, CASE, ISSUE_TITLE, CREATED, CLOSED, STEPS = DISTINCT_STEPS, ADMIN_STEP, CONFORM)
+
+write.csv(t_conf, here::here("Data", "t_conf.csv"), row.names = FALSE)
+
+
+
+# Conformance Analysis Aggregation ----------------------------------------
+message("Start Conformance Analysis aggregation")
+t_conf_agg <- t_conf %>%
+  mutate(CREATED_MONTH = as.Date(floor_date(CREATED, unit = "month"))) %>%
+  group_by(CREATED_MONTH, TICKET, CONFORM) %>%
+  summarize(COUNT = n()) %>%
+  ungroup() %>% 
+  # Need to use spread to fill 0 for missing months to make cumulative time-series complete
+  tidyr::spread(CONFORM, COUNT, fill = 0) %>% 
+  # Need to gather to be able to input to ggplot geom_bar(aes(fill=))
+  tidyr::gather(key = CONFORM, value = COUNT, -TICKET, -CREATED_MONTH) %>%
+  arrange(TICKET, CREATED_MONTH) %>%
+  group_by(TICKET) %>% 
+  mutate(CUMULATIVE_COUNT = cumsum(COUNT)) %>%
+  ungroup()
+  
+write.csv(t_conf_agg, here::here("Data", "t_conf_agg.csv"), row.names = FALSE)
+  
+

@@ -15,7 +15,9 @@ SELECT   DISTINCT
          class.NAME AS CLASSIFICATION,
          CLASS.REGISTRATIONIDPREFIX AS CLASS_SHORT,
          i.vip,
-         adminstep.admin_step
+         adminstep.admin_step,
+         steps.total_steps,
+         steps.distinct_steps
   FROM                           KASPERSK.ISSUE i
                               LEFT JOIN
                                  KASPERSK.BUSINESSUNIT bu
@@ -102,4 +104,13 @@ SELECT   DISTINCT
                           AND TRUNC (status.modifieddate, 'ddd') =
                                 DATE '2019-05-16'))) adminstep
          ON adminstep.issue = i.oid
+         /* Add step counts */
+         LEFT JOIN
+         (
+           SELECT   status.issue,
+           COUNT (status.issuestatenew) AS total_steps,
+           COUNT (DISTINCT status.issuestatenew) AS distinct_steps
+    FROM   KASPERSK.issuestatuslog status
+GROUP BY   status.issue
+         ) steps ON steps.issue = i.oid
  WHERE   UPPER (i.TITLE) NOT LIKE 'PRÓBA%'
