@@ -359,7 +359,7 @@ t_lb_tp_open <- t_backlog_tr %>%
   select(CASE, ISSUE_TITLE, CREATED, TICKET, LAST_EVENT, LAST_EVENT_DATE, APPGROUP) %>% 
   mutate(DAYS_OPEN = difftime(Sys.Date(), CREATED, units="days")) %>% 
   group_by(TICKET) %>% 
-  top_n(10, DAYS_OPEN) %>% 
+  top_n(10, row_number(DAYS_OPEN)) %>% 
   ungroup() %>% 
   mutate(DAYS_OPEN = round(DAYS_OPEN, 0)) %>% 
   arrange(TICKET, desc(DAYS_OPEN)) %>% 
@@ -379,7 +379,7 @@ t_lb_fte_open <- t_fte_tr %>%
   mutate(MONTHS_OPEN = as.numeric(difftime(Sys.Date(), CREATED, units= "days") / 30),
          FTE_PER_MONTH = round(TOTAL_HOURS/MONTHS_OPEN/7/21, 2)) %>% 
   group_by(TICKET) %>% 
-  top_n(10, TOTAL_HOURS) %>% 
+  top_n(10, row_number(TOTAL_HOURS)) %>% 
   ungroup() %>% 
   mutate(TOTAL_HOURS = round(TOTAL_HOURS, 0)) %>% 
   arrange(TICKET, desc(TOTAL_HOURS)) %>% 
