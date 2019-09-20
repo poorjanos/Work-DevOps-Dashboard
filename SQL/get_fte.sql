@@ -8,8 +8,9 @@
            UPPER (application_group.application_group_concat)
               AS application_group_concat,
            class.NAME AS CLASSIFICATION,
-           CLASS.REGISTRATIONIDPREFIX AS CLASS_SHORT,
+           CLASS.REGISTRATIONIDPREFIX,
            i.vip,
+           case when i.vip = 1 then 'VIP' else CLASS.REGISTRATIONIDPREFIX end as CLASS_SHORT,
            wts_total_hours.month_worktimesheet,
            UPPER (wts_total_hours.user_worktimesheet) AS user_worktimesheet,
            UPPER (wts_total_hours.userorg_worktimesheet)
