@@ -1,10 +1,13 @@
+/* Formatted on 2019. 09. 30. 12:45:44 (QP5 v5.115.810.9015) */
 /******************************************************************************/
+
 /* Generate view of tickets with descriptive fields */
+
 /* Includes open and closed tickets */
+
 /* Includes all ticket types */
+
 /******************************************************************************/
-
-
 DROP TABLE t_isd_tickets;
 COMMIT;
 
@@ -34,7 +37,66 @@ AS
                AS CLASS_SHORT,
             adminstep.admin_step,
             steps.total_steps,
-            steps.distinct_steps
+            steps.distinct_steps,
+            CASE
+               --DEV conformance
+            WHEN last_status_equals_case_closed.TIMESTAMP IS NOT NULL
+                 AND CLASS.REGISTRATIONIDPREFIX = 'DEV'
+                 AND ( (last_status_equals_case_closed.TIMESTAMP <
+                           DATE '2019-03-14'
+                        AND steps.distinct_steps >= 29)
+                      OR (i.CREATED >= DATE '2019-03-14'
+                          AND steps.distinct_steps >= 30)
+                      OR (i.CREATED < DATE '2019-03-14'
+                          AND last_status_equals_case_closed.TIMESTAMP >=
+                                DATE '2019-03-14'
+                          AND ( (EXISTS
+                                    (SELECT   1
+                                       FROM   KASPERSK.ISSUESTATUSLOG s
+                                      WHERE   ISSUESTATENEW LIKE '#00%'
+                                              AND i.oid = s.issue)
+                                 AND steps.distinct_steps >= 30)
+                               OR (NOT EXISTS
+                                      (SELECT   1
+                                         FROM   KASPERSK.ISSUESTATUSLOG s
+                                        WHERE   ISSUESTATENEW LIKE '#00%'
+                                                AND i.oid = s.issue)
+                                   AND steps.distinct_steps >= 29))))
+               THEN
+                  'I'
+               --VIP conformance
+            WHEN last_status_equals_case_closed.TIMESTAMP IS NOT NULL
+                 AND i.vip = 1
+                 AND ( (last_status_equals_case_closed.TIMESTAMP <
+                           DATE '2019-03-14'
+                        AND steps.distinct_steps >= 26)
+                      OR (i.CREATED >= DATE '2019-03-14'
+                          AND steps.distinct_steps >= 27)
+                      OR (i.CREATED < DATE '2019-03-14'
+                          AND last_status_equals_case_closed.TIMESTAMP >=
+                                DATE '2019-03-14'
+                          AND ( (EXISTS
+                                    (SELECT   1
+                                       FROM   KASPERSK.ISSUESTATUSLOG s
+                                      WHERE   ISSUESTATENEW LIKE '#00%'
+                                              AND i.oid = s.issue)
+                                 AND steps.distinct_steps >= 26)
+                               OR (NOT EXISTS
+                                      (SELECT   1
+                                         FROM   KASPERSK.ISSUESTATUSLOG s
+                                        WHERE   ISSUESTATENEW LIKE '#00%'
+                                                AND i.oid = s.issue)
+                                   AND steps.distinct_steps >= 27))))
+               THEN
+                  'I'
+               --SDEV conformance
+            WHEN     last_status_equals_case_closed.TIMESTAMP IS NOT NULL
+                 AND CLASS.REGISTRATIONIDPREFIX = 'SDEV'
+                 AND steps.distinct_steps >= 16
+               THEN
+                  'I'
+            END
+               AS conform
      FROM                              KASPERSK.ISSUE i
                                     LEFT JOIN
                                        KASPERSK.BUSINESSUNIT bu
@@ -137,4 +199,11 @@ AS
             ON steps.issue = i.oid
     WHERE   UPPER (i.TITLE) NOT LIKE 'PRÓBA%';
 
+COMMIT;
+
+
+
+UPDATE   t_isd_tickets
+   SET   conform = 'N'
+ WHERE   conform IS NULL AND closed IS NOT NULL and class_short in ('DEV', 'VIP', 'SDEV');
 COMMIT;
