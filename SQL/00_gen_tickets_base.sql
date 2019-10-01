@@ -1,4 +1,3 @@
-/* Formatted on 2019. 09. 30. 12:45:44 (QP5 v5.115.810.9015) */
 /******************************************************************************/
 
 /* Generate view of tickets with descriptive fields */
@@ -203,7 +202,66 @@ COMMIT;
 
 
 
+
+/******************************************************************************/
+
+/* Further engineer descriptive features */
+
+/******************************************************************************/
+
 UPDATE   t_isd_tickets
    SET   conform = 'N'
- WHERE   conform IS NULL AND closed IS NOT NULL and class_short in ('DEV', 'VIP', 'SDEV');
+ WHERE       conform IS NULL
+         AND closed IS NOT NULL
+         AND class_short IN ('DEV', 'VIP', 'SDEV');
+COMMIT;
+
+
+
+ALTER TABLE t_isd_tickets
+ADD
+(ticket varchar2(25),
+appgroup varchar2(60));
+COMMIT;
+
+
+UPDATE t_isd_tickets
+SET appgroup = 'Z_KÖZÖS' where instr(application_group_concat, '/') >= 1;
+
+UPDATE t_isd_tickets
+SET appgroup = application_group_concat where instr(application_group_concat, '/') < 1;
+
+
+UPDATE   t_isd_tickets
+   SET   ticket = 'Data-RFC'
+ WHERE   classification IN
+               ('Adatkorrekció (RFC)', 'Adatlekérdezési igény (RFC)');
+
+UPDATE   t_isd_tickets
+   SET   ticket = 'Defect-INC'
+ WHERE   class_short = 'INC';
+
+UPDATE   t_isd_tickets
+   SET   ticket = 'Development-RFC'
+ WHERE   class_short = 'RFC'
+         AND classification NOT IN
+                  ('Adatkorrekció (RFC)', 'Adatlekérdezési igény (RFC)');
+
+UPDATE   t_isd_tickets
+   SET   ticket = 'Development-DEV'
+ WHERE   class_short = 'DEV';
+
+UPDATE   t_isd_tickets
+   SET   ticket = 'Development-SDEV'
+ WHERE   class_short = 'SDEV';
+
+UPDATE   t_isd_tickets
+   SET   ticket = 'Development-VIP'
+ WHERE   class_short = 'VIP';
+
+COMMIT;
+
+DELETE FROM   t_isd_tickets
+      WHERE   ticket IS NULL;
+
 COMMIT;

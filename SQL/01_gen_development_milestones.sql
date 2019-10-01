@@ -18,6 +18,8 @@ AS
             OR CLASSIFICATION = 'Fejlesztési igény (RFC)';
 
 COMMIT;
+
+
 ALTER TABLE t_dev_milestones
 ADD
 (
@@ -322,53 +324,5 @@ COMMIT;
 UPDATE   t_dev_milestones a
    SET   release_net_days = release_days - release_wait_days
  WHERE   release_days IS NOT NULL;
-
-COMMIT;
-
-
-
-/* Query FTE for development phases */
---DROP TABLE t_dev_fte_phases;
---COMMIT;
-
-CREATE TABLE t_dev_fte_phases
-AS
-   SELECT   *
-     FROM   (  SELECT   a.*,
-                        wts_total_hours.user_worktimesheet,
-                        wts_total_hours.userorg_work timesheet,
-                        wts_total_hours.created_worktimesheet,
-                        wts_total_hours.hours_worktimesheet,
-                        CASE
-                           WHEN a.release_start IS NOT NULL
-                                AND wts_total_hours.created_worktimesheet <
-                                      a.release_start
-                           THEN
-                              'Demand'
-                           WHEN a.release_start IS NOT NULL
-                                AND wts_total_hours.created_worktimesheet >=
-                                      a.release_start
-                           THEN
-                              'Release'
-                        END
-                           AS phase
-                 FROM      t_dev_milestones a
-                        LEFT JOIN
-                           (SELECT   a.issue,
-                                     b.name AS user_worktimesheet,
-                                     c.name AS userorg_worktimesheet,
-                                     a.created AS created_worktimesheet,
-                                     a.hours AS hours_worktimesheet
-                              FROM         KASPERSK.worktimesheet a
-                                        LEFT JOIN
-                                           KASPERSK.permissionpolicyuser b
-                                        ON a.owner = b.oid
-                                     LEFT JOIN
-                                        KASPERSK.organization c
-                                     ON b.defaultorganization = c.oid
-                             WHERE   timetype = 'WorkTime') wts_total_hours
-                        ON a.oid = wts_total_hours.issue
-             ORDER BY   CASE, created, created_worktimesheet)
-    WHERE   hours_worktimesheet IS NOT NULL;
 
 COMMIT;

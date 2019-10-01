@@ -12,9 +12,9 @@ check_date <- function(start_date, end_date, check_date) {
   #   Data Frame: single cell df with a flag
   #   
   if (check_date >= start_date & (is.na(end_date) | check_date <= end_date)) {
-    return(data.frame("BACKLOG"=1))
+    return(data.frame("COUNT"=1))
   } else {
-    return(data.frame("BACKLOG"=0))
+    return(data.frame("COUNT"=0))
   }
 }
 
@@ -42,7 +42,7 @@ get_backlog <- function(df, cutpoints, ...) {
     cbind(purrr::pmap_dfr(., ~check_date(..1, ..2, ..3))) %T>% {print('Finish cbind')} %>% 
     # Save computation results to return obj
     group_by(CUTPOINT, !!!group_vars) %T>% {print('Finish groupby')} %>% 
-    summarize(BACKLOG = sum(BACKLOG)) %>% 
+    summarize(COUNT = sum(COUNT)) %>% 
     ungroup()
   
   return(backlog)
