@@ -136,7 +136,7 @@ ggplotly(p, tooltip = c("x", "y", "colour")) %>%
 Column 
 -------------------------------------
 
-### Development Net Lead Times (Corrected for Voting Times)
+### Development: Net Median Lead Times (excl. Voting Times)
 
 ```{r, warning=FALSE, message=FALSE}
 library(ggplot2)
@@ -163,7 +163,7 @@ ggplotly(p, tooltip = c("x", "y", "colour")) %>%
 
 
 
-### Ratio of Lead Time Spent on Voting
+### Development: Ratio of Lead Time Spent on Voting
 
 ```{r, warning=FALSE, message=FALSE}
 library(ggplot2)
@@ -187,6 +187,117 @@ ggplotly(p, tooltip = c("x", "y", "colour")) %>%
   layout(
     yaxis = list(hoverformat = '.4f'),
     legend = list(orientation = "v", y = 0.5),
-    margin = list(b = 100)
+    margin = list(b = 100, l = 40)
   )
 ```
+
+
+
+Conformance
+===================================== 
+
+Column
+-------------------------------------
+
+### Conform Ticket Ratio Since System Start
+
+```{r, warning=FALSE, message=FALSE}
+library(ggplot2)
+library(plotly)
+library(dplyr)
+
+t_conf_agg <- read.csv(here::here("Data", "t_conf_agg.csv"), stringsAsFactors = FALSE) %>% 
+                group_by(CREATED_YEAR, TICKET, CONFORM) %>% 
+                summarize(COUNT = sum(COUNT)) %>% 
+                ungroup() %>%
+                group_by(CREATED_YEAR, TICKET) %>% 
+                mutate(CONFORM_PROP = round(COUNT / sum(COUNT), 4)) %>% 
+                ungroup() %>% 
+                filter(CONFORM == "Conform")
+
+p <- ggplot(t_conf_agg, aes(x = TICKET, y = CONFORM_PROP)) +
+  geom_bar(aes(fill = as.factor(CREATED_YEAR)), stat = "identity", position = "dodge") +
+  # Need to set text position by 'y' argument as plotly does not handle aes(vjust=)
+  #geom_text(aes(label=paste(CONFORM_PROP*100,"%",sep=""), y = CONFORM_PROP+0.01), position = position_dodge(width = 0.6)) +
+  scale_y_continuous(labels = percent) +
+  theme(
+    axis.text.x = element_text(angle = 0),
+    legend.title = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank()
+  )
+
+ggplotly(p, tooltip = c("x", "y", "colour")) %>%
+  layout(
+    yaxis = list(hoverformat = '.4f'),
+    margin = list(l = 40, b = 80),
+    legend = list(orientation = "v", y = 0.5)
+  )
+```    
+
+
+### Conform/Deviant Ticket Count by Start Month
+```{r, warning=FALSE, message=FALSE}
+library(ggplot2)
+library(plotly)
+
+t_conf_agg <- read.csv(here::here("Data", "t_conf_agg.csv"), stringsAsFactors = FALSE)
+
+p <- ggplot(t_conf_agg, aes(x = CREATED_MONTH, y = COUNT, fill = CONFORM)) +
+  geom_bar(stat = "identity") +
+  facet_grid(.~TICKET) +
+  theme(
+    axis.text.x = element_text(angle = 90),
+    legend.title = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank()
+  )
+
+ggplotly(p, tooltip = c("x", "y")) %>%
+  layout(
+    legend = list(orientation = "v", y = 0.5),
+    margin = list(b = 80)
+  )
+```    
+
+
+Column
+-------------------------------------
+
+### Conform Tickets Lead Time Breakdown (Median)
+```{r, warning=FALSE, message=FALSE}
+library(ggplot2)
+library(plotly)
+
+t_conf_agg_lt <- read.csv(here::here("Data", "t_conf_agg_lt.csv"), stringsAsFactors = FALSE) %>%
+  mutate(SEGMENT = forcats::fct_relevel(SEGMENT, "RELEASE_DAYS", "DEMAND_DAYS", "PRE_DEMAND_DAYS"))
+
+p <- ggplot(t_conf_agg_lt, aes(x = CREATED_MONTH, y = LEAD_TIME, fill = SEGMENT)) +
+  geom_bar(stat = "identity") +
+  facet_grid(.~TICKET) +
+  theme(
+    axis.text.x = element_text(angle = 90),
+    legend.title = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank()
+  )
+
+ggplotly(p, tooltip = c("x", "y")) %>%
+  layout(
+    legend = list(orientation = "v", y = 0.5),
+    margin = list(b = 80)
+  )
+```
+
+### Ticket Navigator (Inspect Tickets One-by-One)
+```{r, warning=FALSE, message=FALSE}
+library(DT)
+
+t_conf <- read.csv(here::here("Data", "t_conf.csv"), stringsAsFactors = FALSE)
+
+datatable(t_conf, rownames = FALSE, extensions = "Buttons", options = list(
+  dom = "Bfrtip",
+  buttons = list("excel", "csv")
+))# %>%
+  #formatStyle(colnames(t_conf), fontSize = "70%")
+```    

@@ -63,9 +63,18 @@ t_backlog_tr <- t_backlog %>%
     CREATED = ymd_hms(CREATED),
     CLOSED = ymd_hms(CLOSED),
     START = as.Date(floor_date(CREATED)),
-    END = as.Date(floor_date(CLOSED))
+    END = as.Date(floor_date(CLOSED)),
+    CREATED_MONTH = paste0(
+      substr(as.Date(floor_date(CREATED, unit = "month")), 1, 4),
+      "/",
+      substr(as.Date(floor_date(CREATED, unit = "month")), 6, 7)
+    ),
+    CLOSED_MONTH = paste0(
+      substr(as.Date(floor_date(CLOSED, unit = "month")), 1, 4),
+      "/",
+      substr(as.Date(floor_date(CLOSED, unit = "month")), 6, 7)
+    )
   )
-
 
 message('Start cleaning dev_milestones table')
 t_dev_milestones_tr <- t_dev_milestones %>%
@@ -73,8 +82,19 @@ t_dev_milestones_tr <- t_dev_milestones %>%
     CREATED = ymd_hms(CREATED),
     CLOSED = ymd_hms(CLOSED),
     START = as.Date(floor_date(CREATED)),
-    END = as.Date(floor_date(CLOSED))
+    END = as.Date(floor_date(CLOSED)),
+    CREATED_MONTH = paste0(
+      substr(as.Date(floor_date(CREATED, unit = "month")), 1, 4),
+      "/",
+      substr(as.Date(floor_date(CREATED, unit = "month")), 6, 7)
+    ),
+    CLOSED_MONTH = paste0(
+      substr(as.Date(floor_date(CLOSED, unit = "month")), 1, 4),
+      "/",
+      substr(as.Date(floor_date(CLOSED, unit = "month")), 6, 7)
+    )
   )
+
 
 # FTE
 # message('Start cleaning FTE table')
@@ -142,11 +162,6 @@ t_ticket_started <- t_backlog_tr %>%
   filter(!is.na(CREATED)) %>%
   filter(CREATED >= floor_date(ymd(Sys.Date()) - years(2), unit = "month") &
     CREATED < floor_date(ymd(Sys.Date()), unit = "month")) %>%
-  mutate(CREATED_MONTH = paste0(
-    substr(as.Date(floor_date(CREATED, unit = "month")), 1, 4),
-    "/",
-    substr(as.Date(floor_date(CREATED, unit = "month")), 6, 7)
-  )) %>%
   group_by(CREATED_MONTH, TICKET) %>%
   summarize(COUNT = n()) %>%
   ungroup()
@@ -162,11 +177,6 @@ t_ticket_closed <- t_backlog_tr %>%
   filter(!is.na(CLOSED)) %>%
   filter(CLOSED >= floor_date(ymd(Sys.Date()) - years(2), unit = "month") &
     CLOSED < floor_date(ymd(Sys.Date()), unit = "month")) %>%
-  mutate(CLOSED_MONTH = paste0(
-    substr(as.Date(floor_date(CLOSED, unit = "month")), 1, 4),
-    "/",
-    substr(as.Date(floor_date(CLOSED, unit = "month")), 6, 7)
-  )) %>%
   group_by(CLOSED_MONTH, TICKET) %>%
   summarize(COUNT = n()) %>%
   ungroup()
@@ -182,14 +192,7 @@ t_leadtime_ticket <- t_backlog_tr %>%
   filter(!is.na(CLOSED)) %>%
   filter(CLOSED >= floor_date(ymd(Sys.Date()) - years(2), unit = "month") &
     CLOSED < floor_date(ymd(Sys.Date()), unit = "month")) %>%
-  mutate(
-    CLOSED_MONTH = paste0(
-      substr(as.Date(floor_date(CLOSED, unit = "month")), 1, 4),
-      "/",
-      substr(as.Date(floor_date(CLOSED, unit = "month")), 6, 7)
-    ),
-    LEADTIME = difftime(CLOSED, CREATED, units = "days")
-  ) %>%
+  mutate(LEADTIME = difftime(CLOSED, CREATED, units = "days")) %>%
   group_by(CLOSED_MONTH, TICKET) %>%
   summarize(LEADTIME = round(median(LEADTIME), 1)) %>%
   ungroup()
@@ -205,13 +208,6 @@ t_leadtime_dev_net <- t_dev_milestones_tr %>%
   filter(!is.na(CLOSED)) %>%
   filter(CLOSED >= floor_date(ymd(Sys.Date()) - years(2), unit = "month") &
     CLOSED < floor_date(ymd(Sys.Date()), unit = "month")) %>%
-  mutate(
-    CLOSED_MONTH = paste0(
-      substr(as.Date(floor_date(CLOSED, unit = "month")), 1, 4),
-      "/",
-      substr(as.Date(floor_date(CLOSED, unit = "month")), 6, 7)
-    )
-  ) %>%
   group_by(CLOSED_MONTH, TICKET) %>%
   summarize(LEADTIME_NET = round(median(START_CLOSE_NET_DAYS), 1),
             NET_DAYS = sum(START_CLOSE_NET_DAYS),
@@ -418,47 +414,61 @@ write.csv(t_leadtime_dev_net, here::here("Data", "t_leadtime_dev_net.csv"), row.
 # 
 # 
 # 
-# 
-# # Conformance Analysis Issue List -----------------------------------------
-# message("Start Conformance Analysis issue list")
-# t_conf <- t_backlog_tr %>%
-#   filter(!is.na(CLOSED) & TICKET %in% c("Development", "Development Small") & CLASS_SHORT != "RFC") %>%
-#   select(CASE, ISSUE_TITLE, APPLICATION, CREATED, CLOSED, TICKET, CLASS_SHORT, DISTINCT_STEPS, ADMIN_STEP, APPGROUP) %>%
-#   tidyr::replace_na(list(ADMIN_STEP = "N")) %>%
-#   mutate(STEP_NUM_OK = case_when(
-#     TICKET == "Development" & DISTINCT_STEPS < 30 ~ "N",
-#     TICKET == "Development Small" & CLASS_SHORT == "DEV" & DISTINCT_STEPS < 25 ~ "N",
-#     TICKET == "Development Small" & CLASS_SHORT == "SDEV" & DISTINCT_STEPS < 17 ~ "N",
-#     TRUE ~ "I"
-#   )) %>%
-#   mutate(CONFORM = case_when(
-#     APPLICATION == "ISD" & STEP_NUM_OK == "I" ~ "CONFORM",
-#     STEP_NUM_OK == "N" | ADMIN_STEP == "I" ~ "DEVIANT",
-#     TRUE ~ "CONFORM"
-#   )) %>%
-#   arrange(TICKET, CREATED) %>%
-#   select(TICKET, CASE, ISSUE_TITLE, CREATED, CLOSED, STEPS = DISTINCT_STEPS, ADMIN_STEP, CONFORM)
-# 
-# write.csv(t_conf, here::here("Data", "t_conf.csv"), row.names = FALSE)
-# 
-# 
-# 
-# # Conformance Analysis Aggregation ----------------------------------------
-# message("Start Conformance Analysis aggregation")
-# t_conf_agg <- t_conf %>%
-#   mutate(CREATED_MONTH = as.Date(floor_date(CREATED, unit = "month"))) %>%
-#   group_by(CREATED_MONTH, TICKET, CONFORM) %>%
-#   summarize(COUNT = n()) %>%
-#   ungroup() %>% 
-#   # Need to use spread to fill 0 for missing months to make cumulative time-series complete
-#   tidyr::spread(CONFORM, COUNT, fill = 0) %>% 
-#   # Need to gather to be able to input to ggplot geom_bar(aes(fill=))
-#   tidyr::gather(key = CONFORM, value = COUNT, -TICKET, -CREATED_MONTH) %>%
-#   arrange(TICKET, CREATED_MONTH) %>%
-#   group_by(TICKET) %>% 
-#   mutate(CUMULATIVE_COUNT = cumsum(COUNT)) %>%
-#   ungroup()
-#   
-# write.csv(t_conf_agg, here::here("Data", "t_conf_agg.csv"), row.names = FALSE)
-#   
-# 
+
+
+
+# Conformance Analysis Issue List -----------------------------------------
+message("Start Conformance Analysis issue list")
+t_conf <- t_dev_milestones_tr %>%
+  filter(!is.na(CLOSED) & CLASS_SHORT != "RFC") %>%
+  select(TICKET, CASE_ID, ISSUE_TITLE, CREATED, CLOSED, STEPS = DISTINCT_STEPS, ADMIN_STEP, CONFORM) %>%
+  mutate(CONFORM = case_when(CONFORM == "I" ~ "Conform",
+                             TRUE ~ "Deviant")) %>% 
+  arrange(TICKET, CREATED)
+
+write.csv(t_conf, here::here("Data", "t_conf.csv"), row.names = FALSE)
+
+
+
+# Conformance Analysis Aggregation ----------------------------------------
+message("Start Conformance Analysis aggregation")
+t_conf_agg <- t_dev_milestones_tr %>%
+  filter(!is.na(CLOSED) & CLASS_SHORT != "RFC") %>%
+  mutate(CREATED_YEAR = substr(CREATED_MONTH, 1, 4)) %>% 
+  mutate(CONFORM = case_when(
+    CONFORM == "I" ~ "Conform",
+    TRUE ~ "Deviant"
+  )) %>%
+  group_by(CREATED_YEAR, CREATED_MONTH, TICKET, CONFORM) %>%
+  summarize(COUNT = n()) %>%
+  ungroup() %>%
+  # Need to use spread to fill 0 for missing months to make cumulative time-series complete
+  tidyr::spread(CONFORM, COUNT, fill = 0) %>%
+  # Need to gather to be able to input to ggplot geom_bar(aes(fill=))
+  tidyr::gather(key = CONFORM, value = COUNT, -TICKET, -CREATED_YEAR, -CREATED_MONTH) %>%
+  arrange(TICKET, CREATED_YEAR, CREATED_MONTH) %>%
+  group_by(TICKET) %>%
+  mutate(CUMULATIVE_COUNT = cumsum(COUNT)) %>%
+  ungroup()
+
+write.csv(t_conf_agg, here::here("Data", "t_conf_agg.csv"), row.names = FALSE)
+
+
+# Conformance Lead Times --------------------------------------------------
+message("Start Conformance Analysis aggregation")
+t_conf_agg_lt <- t_dev_milestones_tr %>%
+  filter(!is.na(CLOSED) & CLASS_SHORT != "RFC" & CONFORM == "I") %>%
+  group_by(CREATED_MONTH, TICKET) %>%
+  summarize(PRE_DEMAND_DAYS = round(median(PRE_DEMAND_DAYS), 4),
+            DEMAND_DAYS = round(median(DEMAND_DAYS), 4),
+            RELEASE_DAYS = round(median(RELEASE_DAYS),4))%>%
+  ungroup() %>% 
+  tidyr::gather(key = SEGMENT, value = LEAD_TIME, -CREATED_MONTH, -TICKET) %>% 
+  mutate(SEGMENT = factor(SEGMENT, levels = c("RELEASE_DAYS", "DEMAND_DAYS", "PRE_DEMAND_DAYS")))
+
+write.csv(t_conf_agg_lt, here::here("Data", "t_conf_agg_lt.csv"), row.names = FALSE)
+
+
+
+
+
