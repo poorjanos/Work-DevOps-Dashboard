@@ -96,51 +96,22 @@ t_dev_milestones_tr <- t_dev_milestones %>%
   )
 
 
-# FTE
-# message('Start cleaning FTE table')
-# t_fte_tr <- t_fte %>%
-#   filter(CLASS_SHORT %in% c("INC", "SDEV", "DEV", "RFC")) %>%
-#   mutate(
-#     CREATED = ymd_hms(CREATED),
-#     TICKET = case_when(
-#       CLASSIFICATION == "Adatkorrekció (RFC)" | CLASSIFICATION == "Adatlekérdezési igény (RFC)" ~ "Data correction/query",
-#       CLASS_SHORT == "INC" ~ "Defect",
-#       CLASS_SHORT == "SDEV" | (CLASS_SHORT == "DEV" & VIP == 1 & CREATED <= as.Date('2019-07-05')) ~ "Development Small",
-#       TRUE ~ "Development"
-#     ),
-#     APPGROUP = case_when(
-#       stringr::str_detect(APPLICATION_GROUP_CONCAT, "/") ~ "Z_Közös",
-#       TRUE ~ APPLICATION_GROUP_CONCAT
-#     ),
-#     APPSINGLE = case_when(
-#       stringr::str_detect(APPLICATION, ";") ~ "Multiple",
-#       TRUE ~ "Single"
-#     )
-#   )
+#FTE
+message('Start cleaning FTE table')
+t_fte_tr <- t_fte %>%
+  filter(complete.cases(HOURS_WORKTIMESHEET)) %>% 
+  mutate(
+    CREATED = ymd_hms(CREATED),
+    CLOSED = ymd_hms(CLOSED),
+    TARGETDAY = ymd_hms(TARGETDAY),
+    TARGETDAY_TO_MONTH = floor_date(TARGETDAY, unit = "month"),
+    TARGET_MONTH = paste0(
+      substr(as.Date(floor_date(TARGETDAY, unit = "month")), 1, 4),
+      "/",
+      substr(as.Date(floor_date(TARGETDAY, unit = "month")), 6, 7)
+    )
+  )
 
-
-# Dev FTE phases
-# message('Start cleaning dev FTE phases table')
-# t_dev_fte_phases_tr <-  t_dev_fte_phases %>%
-#   mutate(
-#     CREATED = ymd_hms(CREATED),
-#     CREATED_WORKTIMESHEET = ymd_hms(CREATED_WORKTIMESHEET),
-#     TICKET = case_when(
-#       CLASSIFICATION == "Adatkorrekció (RFC)" | CLASSIFICATION == "Adatlekérdezési igény (RFC)" ~ "Data correction/query",
-#       CLASS_SHORT == "INC" ~ "Defect",
-#       CLASS_SHORT == "SDEV" | (CLASS_SHORT == "DEV" & VIP == 1 & CREATED <= as.Date('2019-07-05')) ~ "Development Small",
-#       TRUE ~ "Development"
-#     ),
-#     APPGROUP = case_when(
-#       stringr::str_detect(APPLICATION_GROUP_CONCAT, "/") ~ "Z_Közös",
-#       TRUE ~ APPLICATION_GROUP_CONCAT
-#     ),
-#     APPSINGLE = case_when(
-#       stringr::str_detect(APPLICATION, ";") ~ "Multiple",
-#       TRUE ~ "Single"
-#     )
-#   )
-  
   
 
 # Tickets Open ---------------------------------------------------------
@@ -218,25 +189,47 @@ t_leadtime_dev_net <- t_dev_milestones_tr %>%
 write.csv(t_leadtime_dev_net, here::here("Data", "t_leadtime_dev_net.csv"), row.names = FALSE)
 
 
-# # FTE and Unit FTE --------------------------------------------------------
-# message("Start FTE aggregation for ticket types")
-# t_fte_ticket <- t_fte_tr %>%
-#   filter(!is.na(MONTH_WORKTIMESHEET)) %>%
-#   mutate(MONTH_WORKTIMESHEET = ymd_hms(MONTH_WORKTIMESHEET)) %>% 
-#   filter(MONTH_WORKTIMESHEET >= floor_date(ymd(Sys.Date()) - years(2), unit = "month") &
-#            MONTH_WORKTIMESHEET < floor_date(ymd(Sys.Date()), unit = "month")) %>%
-#   group_by(MONTH_WORKTIMESHEET, TICKET) %>% 
-#   summarize(HOURS_WORKTIMESHEET = sum(HOURS_WORKTIMESHEET),
-#             TICKET_NUM = n()) %>% 
-#   ungroup() %>% 
-#   left_join(t_mnap, by = c("MONTH_WORKTIMESHEET" = "IDOSZAK")) %>% 
-#   mutate(FTE = round(HOURS_WORKTIMESHEET/7/MNAP, 2),
-#          FTE_NORM = round(FTE/TICKET_NUM, 4)) 
-# 
-# write.csv(t_fte_ticket, here::here("Data", "t_fte_ticket.csv"), row.names = FALSE)
-#   
-#   
-# 
+
+
+
+
+# FTE and Unit FTE --------------------------------------------------------
+message("Start FTE aggregation for ticket types")
+t_fte_ticket <- t_fte_tr %>%
+  filter(TARGETDAY >= floor_date(ymd(Sys.Date()) - years(2), unit = "month") &
+           TARGETDAY < floor_date(ymd(Sys.Date()), unit = "month")) %>%
+  group_by(TARGETDAY_TO_MONTH, TARGET_MONTH, TICKET) %>%
+  summarize(HOURS_WORKTIMESHEET = sum(HOURS_WORKTIMESHEET),
+            TICKET_NUM = n()) %>%
+  ungroup() %>%
+  left_join(t_mnap, by = c("TARGETDAY_TO_MONTH" = "IDOSZAK")) %>%
+  mutate(FTE = round(HOURS_WORKTIMESHEET/7/MNAP, 2),
+         FTE_NORM = round(FTE/TICKET_NUM, 4))
+
+write.csv(t_fte_ticket, here::here("Data", "t_fte_ticket.csv"), row.names = FALSE)
+
+
+
+# Dev FTE  ----------------------------------------------------------------
+message("Start dev FTE phases aggregation for ticket types")
+t_fte_phases <- t_fte_tr %>%
+  filter(stringr::str_detect(TICKET, "Development")) %>% 
+  filter(TARGETDAY >= floor_date(ymd(Sys.Date()) - years(2), unit = "month") &
+           TARGETDAY < floor_date(ymd(Sys.Date()), unit = "month")) %>%
+  tidyr::replace_na(list(ACTIONTYPEGROUP = 'Ismeretlen')) %>% 
+  mutate(ACTIONTYPEGROUP = forcats::fct_lump(factor(ACTIONTYPEGROUP), n = 5, other_level = "Egyéb")) %>% 
+  group_by(TARGETDAY_TO_MONTH, TARGET_MONTH, TICKET, ACTIONTYPEGROUP) %>%
+  summarize(HOURS_WORKTIMESHEET = sum(HOURS_WORKTIMESHEET),
+            TICKET_NUM = n()) %>%
+  ungroup() %>%
+  left_join(t_mnap, by = c("TARGETDAY_TO_MONTH" = "IDOSZAK")) %>%
+  mutate(FTE = round(HOURS_WORKTIMESHEET/7/MNAP, 2),
+         FTE_NORM = round(FTE/TICKET_NUM, 4))
+
+write.csv(t_fte_phases, here::here("Data", "t_fte_phases.csv"), row.names = FALSE)
+
+
+
 # # Teams New Ticket -----------------------------------------------------------
 # message("Start team new ticket aggregation for ticket types")
 # t_nb_ticket_team <- t_backlog_tr %>%
@@ -317,32 +310,7 @@ write.csv(t_leadtime_dev_net, here::here("Data", "t_leadtime_dev_net.csv"), row.
 # 
 # 
 # 
-# # Dev FTE  ----------------------------------------------------------------
-# message("Start dev FTE phases aggregation for ticket types")
-# t_fte_phases <- t_dev_fte_phases_tr %>%
-#   mutate(
-#     MONTH_WORKTIMESHEET = floor_date(CREATED_WORKTIMESHEET, unit = "month"),
-#     FTE_BREAKDOWN = case_when(
-#       !is.na(ABORTED) ~ "Aborted",
-#       is.na(ABORTED) & is.na(PHASE) ~ "Demand",
-#       TRUE ~ PHASE
-#     )
-#   ) %>%
-#   filter(MONTH_WORKTIMESHEET >= floor_date(ymd(Sys.Date()) - years(2), unit = "month") &
-#     MONTH_WORKTIMESHEET < floor_date(ymd(Sys.Date()), unit = "month")) %>%
-#   group_by(MONTH_WORKTIMESHEET, FTE_BREAKDOWN) %>%
-#   summarize(
-#     HOURS_WORKTIMESHEET = sum(HOURS_WORKTIMESHEET),
-#     TICKET_NUM = n()
-#   ) %>%
-#   ungroup() %>%
-#   left_join(t_mnap, by = c("MONTH_WORKTIMESHEET" = "IDOSZAK")) %>%
-#   mutate(
-#     FTE = round(HOURS_WORKTIMESHEET / 7 / MNAP, 2),
-#     FTE_NORM = round(FTE / TICKET_NUM, 4)
-#   )
-# 
-# write.csv(t_fte_phases, here::here("Data", "t_fte_phases.csv"), row.names = FALSE)
+
 # 
 # 
 # 

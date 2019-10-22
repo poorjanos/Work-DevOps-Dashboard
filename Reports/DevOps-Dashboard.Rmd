@@ -301,3 +301,79 @@ datatable(t_conf, rownames = FALSE, extensions = "Buttons", options = list(
 ))# %>%
   #formatStyle(colnames(t_conf), fontSize = "70%")
 ```    
+
+
+FTE
+===================================== 
+
+Column {.tabset}
+-------------------------------------
+
+### FTE
+
+```{r, warning=FALSE, message=FALSE}
+library(ggplot2)
+library(plotly)
+
+t_fte_ticket <- read.csv(here::here("Data", "t_fte_ticket.csv"), stringsAsFactors = FALSE)
+
+p <- ggplot(t_fte_ticket, aes(x = TARGET_MONTH, y = FTE, group = TICKET)) +
+  geom_line(aes(colour = TICKET)) +
+  theme(
+    axis.text.x = element_text(angle = 90),
+    legend.title = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank()
+  )
+
+ggplotly(p, tooltip = c("x", "y", "colour")) %>%
+  layout(
+    legend = list(orientation = "v", y = 0.5),
+    margin = list(b = 100)
+  )
+```
+
+
+
+### Development FTE (DEV, SDEV, RFC)
+
+```{r, warning=FALSE, message=FALSE}
+
+```
+
+
+
+Column
+-------------------------------------
+
+### FTE/Ticket
+
+```{r, warning=FALSE, message=FALSE}
+library(ggplot2)
+library(plotly)
+
+t_fte_ticket <- read.csv(here::here("Data", "t_fte_ticket.csv"), stringsAsFactors = FALSE)
+
+p <- ggplot(t_fte_ticket, aes(x = TARGET_MONTH, y = FTE_NORM, group = TICKET)) +
+  geom_line(aes(colour = TICKET)) +
+  theme(
+    axis.text.x = element_text(angle = 90),
+    legend.title = element_blank(),
+    axis.title.y = element_blank(),
+    axis.title.x = element_blank()
+  ) 
+
+ggplotly(p, tooltip = c("x", "y", "colour")) %>%
+  layout(
+    legend = list(orientation = "v", y = 0.5),
+    margin = list(b = 100)
+  )
+```
+
+
+
+### Development FTE/Ticket (DEV, SDEV, RFC)
+
+```{r, warning=FALSE, message=FALSE}
+
+```

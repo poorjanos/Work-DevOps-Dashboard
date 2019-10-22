@@ -18,7 +18,7 @@ CREATE TABLE t_isd_worktimesheet
 AS
      SELECT   *
        FROM      t_isd_tickets tickets
-              LEFT JOIN
+              INNER JOIN
                  (  SELECT   issue,
                              b.name AS user_worktimesheet,
                              c.name AS userorg_worktimesheet,
@@ -64,28 +64,6 @@ COMMIT;
 
 
 UPDATE   t_isd_worktimesheet a
-   SET   phase = 'Pre-demand'
- WHERE   EXISTS
-            (SELECT   1
-               FROM   t_dev_milestones b
-              WHERE       a.oid = b.oid
-                      AND b.demand_start IS NOT NULL
-                      AND a.targetday < b.demand_start);
-                      
-
-UPDATE   t_isd_worktimesheet a
-   SET   phase = 'Demand'
- WHERE   EXISTS
-            (SELECT   1
-               FROM   t_dev_milestones b
-              WHERE       a.oid = b.oid
-                      AND b.demand_start IS NOT NULL
-                      AND b.release_start IS NOT NULL
-                      AND a.targetday < b.release_start
-                      AND a.targetday >= b.demand_start);
-                      
-                      
-UPDATE   t_isd_worktimesheet a
    SET   phase = 'Release'
  WHERE   EXISTS
             (SELECT   1
@@ -93,4 +71,28 @@ UPDATE   t_isd_worktimesheet a
               WHERE       a.oid = b.oid
                       AND b.release_start IS NOT NULL
                       AND a.targetday >= b.release_start);
+
+
+
+UPDATE   t_isd_worktimesheet a
+   SET   phase = 'Demand'
+ WHERE   phase IS NULL
+         AND EXISTS
+               (SELECT   1
+                  FROM   t_dev_milestones b
+                 WHERE       a.oid = b.oid
+                         AND b.demand_start IS NOT NULL
+                         AND a.targetday >= b.demand_start);
+
+
+UPDATE   t_isd_worktimesheet a
+   SET   phase = 'Pre-demand'
+ WHERE   phase IS NULL
+         AND EXISTS
+               (SELECT   1
+                  FROM   t_dev_milestones b
+                 WHERE       a.oid = b.oid
+                         AND b.demand_start IS NOT NULL
+                         AND a.targetday < b.demand_start);
+
 COMMIT;
