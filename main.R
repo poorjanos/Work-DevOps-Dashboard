@@ -204,7 +204,11 @@ t_fte_ticket <- t_fte_tr %>%
   ungroup() %>%
   left_join(t_mnap, by = c("TARGETDAY_TO_MONTH" = "IDOSZAK")) %>%
   mutate(FTE = round(HOURS_WORKTIMESHEET/7/MNAP, 2),
-         FTE_NORM = round(FTE/TICKET_NUM, 4))
+         FTE_NORM = round(FTE/TICKET_NUM, 4)) %>% 
+  group_by(TARGET_MONTH) %>%
+  mutate(FTE_PCT = FTE / sum(FTE)) %>%
+  ungroup()
+  
 
 write.csv(t_fte_ticket, here::here("Data", "t_fte_ticket.csv"), row.names = FALSE)
 
@@ -213,18 +217,31 @@ write.csv(t_fte_ticket, here::here("Data", "t_fte_ticket.csv"), row.names = FALS
 # Dev FTE  ----------------------------------------------------------------
 message("Start dev FTE phases aggregation for ticket types")
 t_fte_phases <- t_fte_tr %>%
-  filter(stringr::str_detect(TICKET, "Development")) %>% 
+  filter(stringr::str_detect(TICKET, "Development")) %>%
   filter(TARGETDAY >= floor_date(ymd(Sys.Date()) - years(2), unit = "month") &
-           TARGETDAY < floor_date(ymd(Sys.Date()), unit = "month")) %>%
-  tidyr::replace_na(list(ACTIONTYPEGROUP = 'Ismeretlen')) %>% 
-  mutate(ACTIONTYPEGROUP = forcats::fct_lump(factor(ACTIONTYPEGROUP), n = 5, other_level = "Egyéb")) %>% 
+    TARGETDAY < floor_date(ymd(Sys.Date()), unit = "month")) %>%
+  tidyr::replace_na(list(ACTIONTYPEGROUP = "Ismeretlen")) %>%
+  mutate(ACTIONTYPEGROUP = case_when(
+    ACTIONTYPEGROUP == "Elemzés, egyeztetés, becslés, tervezés, specifikáció készítés" ~ "Elemzés",
+    ACTIONTYPEGROUP == "Megbeszélés, Oktatás, Tréning, Tájékoztatók" ~ "Megbeszélés/oktatás",
+    ACTIONTYPEGROUP == "Vezetõi / projektvezetõi / HR / adminisztrációs feladat" ~ "Vezetõi/admin",
+    TRUE ~ ACTIONTYPEGROUP
+  )) %>%
+  mutate(ACTIONTYPEGROUP = forcats::fct_lump(factor(ACTIONTYPEGROUP), n = 7, other_level = "Egyéb")) %>%
   group_by(TARGETDAY_TO_MONTH, TARGET_MONTH, TICKET, ACTIONTYPEGROUP) %>%
-  summarize(HOURS_WORKTIMESHEET = sum(HOURS_WORKTIMESHEET),
-            TICKET_NUM = n()) %>%
+  summarize(
+    HOURS_WORKTIMESHEET = sum(HOURS_WORKTIMESHEET),
+    TICKET_NUM = n()
+  ) %>%
   ungroup() %>%
   left_join(t_mnap, by = c("TARGETDAY_TO_MONTH" = "IDOSZAK")) %>%
-  mutate(FTE = round(HOURS_WORKTIMESHEET/7/MNAP, 2),
-         FTE_NORM = round(FTE/TICKET_NUM, 4))
+  mutate(
+    FTE = round(HOURS_WORKTIMESHEET / 7 / MNAP, 2),
+    FTE_NORM = round(FTE / TICKET_NUM, 4)
+  ) %>%
+  group_by(TARGET_MONTH, TICKET) %>%
+  mutate(FTE_PCT = FTE / sum(FTE)) %>%
+  ungroup()
 
 write.csv(t_fte_phases, here::here("Data", "t_fte_phases.csv"), row.names = FALSE)
 
