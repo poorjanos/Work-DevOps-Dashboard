@@ -310,7 +310,6 @@ Column {.tabset}
 -------------------------------------
 
 ### FTE
-
 ```{r, warning=FALSE, message=FALSE}
 library(ggplot2)
 library(plotly)
@@ -334,25 +333,36 @@ ggplotly(p, tooltip = c("x", "y", "colour")) %>%
 ```
 
 
-
-### Development FTE (DEV, SDEV, RFC)
-
-```{r, warning=FALSE, message=FALSE}
-
-```
-
-
-
-Column
--------------------------------------
-
-### FTE/Ticket
-
+### FTE %
 ```{r, warning=FALSE, message=FALSE}
 library(ggplot2)
 library(plotly)
 
 t_fte_ticket <- read.csv(here::here("Data", "t_fte_ticket.csv"), stringsAsFactors = FALSE)
+
+p <- ggplot(t_fte_ticket, aes(x = TARGET_MONTH, y = FTE_PCT, group = TICKET)) +
+  geom_line(aes(colour = TICKET)) +
+  scale_y_continuous(labels = percent) +
+  theme(
+    axis.text.x = element_text(angle = 90),
+    legend.title = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank()
+  )
+
+ggplotly(p, tooltip = c("x", "y", "colour")) %>%
+  layout(
+    legend = list(orientation = "v", y = 0.5),
+    margin = list(b = 100, l = 40)
+  )
+```
+
+### FTE/Ticket
+```{r, warning=FALSE, message=FALSE}
+library(ggplot2)
+library(plotly)
+
+t_fte_ticket <- read.csv(here::here("Data", "t_fte_ticket.csv"), stringsAsFactors = FALSE) 
 
 p <- ggplot(t_fte_ticket, aes(x = TARGET_MONTH, y = FTE_NORM, group = TICKET)) +
   geom_line(aes(colour = TICKET)) +
@@ -372,8 +382,102 @@ ggplotly(p, tooltip = c("x", "y", "colour")) %>%
 
 
 
-### Development FTE/Ticket (DEV, SDEV, RFC)
 
+Column {.tabset}
+-------------------------------------
+
+### Development FTE
 ```{r, warning=FALSE, message=FALSE}
+library(ggplot2)
+library(plotly)
+library(scales)
 
+t_fte_phases <- read.csv(here::here("Data", "t_fte_phases.csv"),
+  stringsAsFactors = FALSE
+) %>%
+  mutate(ACTIONTYPEGROUP = forcats::fct_relevel(factor(ACTIONTYPEGROUP),
+    "Egyéb",
+    after = Inf
+  ))
+
+p <- ggplot(t_fte_phases, aes(x = TARGET_MONTH, y = FTE, group = ACTIONTYPEGROUP)) +
+  geom_line(aes(colour = ACTIONTYPEGROUP)) +
+  theme(
+    axis.text.x = element_text(angle = 90),
+    legend.title = element_blank(),
+    axis.title.y = element_blank(),
+    axis.title.x = element_blank()
+  ) +
+  facet_grid(.~TICKET)
+
+ggplotly(p, tooltip = c("x", "y", "colour")) %>%
+  layout(
+    legend = list(orientation = "v", y = 0.5),
+    margin = list(b = 100)
+  )
+```
+
+
+### Development FTE %
+```{r, warning=FALSE, message=FALSE}
+library(ggplot2)
+library(plotly)
+library(scales)
+
+t_fte_phases <- read.csv(here::here("Data", "t_fte_phases.csv"),
+  stringsAsFactors = FALSE
+) %>%
+  mutate(ACTIONTYPEGROUP = forcats::fct_relevel(factor(ACTIONTYPEGROUP),
+    "Egyéb",
+    after = Inf
+  ))
+
+p <- ggplot(t_fte_phases, aes(x = TARGET_MONTH, y = FTE_PCT, group = ACTIONTYPEGROUP)) +
+  geom_line(aes(colour = ACTIONTYPEGROUP)) +
+  scale_y_continuous(labels = percent) +
+  theme(
+    axis.text.x = element_text(angle = 90),
+    legend.title = element_blank(),
+    axis.title.y = element_blank(),
+    axis.title.x = element_blank()
+  ) +
+  facet_grid(.~TICKET)
+
+ggplotly(p, tooltip = c("x", "y", "colour")) %>%
+  layout(
+    legend = list(orientation = "v", y = 0.5),
+    margin = list(b = 100, l = 40)
+  )
+```
+
+
+### Development FTE/Ticket
+```{r, warning=FALSE, message=FALSE}
+library(ggplot2)
+library(plotly)
+library(scales)
+
+t_fte_phases <- read.csv(here::here("Data", "t_fte_phases.csv"),
+  stringsAsFactors = FALSE
+) %>%
+  mutate(ACTIONTYPEGROUP = forcats::fct_relevel(factor(ACTIONTYPEGROUP),
+    "Egyéb",
+    after = Inf
+  ))
+
+p <- ggplot(t_fte_phases, aes(x = TARGET_MONTH, y = FTE_NORM, group = ACTIONTYPEGROUP)) +
+  geom_line(aes(colour = ACTIONTYPEGROUP)) +
+  theme(
+    axis.text.x = element_text(angle = 90),
+    legend.title = element_blank(),
+    axis.title.y = element_blank(),
+    axis.title.x = element_blank()
+  ) +
+  facet_grid(.~TICKET)
+
+ggplotly(p, tooltip = c("x", "y", "colour")) %>%
+  layout(
+    legend = list(orientation = "v", y = 0.5),
+    margin = list(b = 100)
+  )
 ```
