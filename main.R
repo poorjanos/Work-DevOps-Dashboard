@@ -247,158 +247,119 @@ write.csv(t_fte_phases, here::here("Data", "t_fte_phases.csv"), row.names = FALS
 
 
 
-# # Teams New Ticket -----------------------------------------------------------
-# message("Start team new ticket aggregation for ticket types")
-# t_nb_ticket_team <- t_backlog_tr %>%
-#   # Transform data
-#   filter(!is.na(CREATED)) %>%
-#   filter(CREATED >= floor_date(ymd(Sys.Date()) - years(2), unit = "month") &
-#            CREATED < floor_date(ymd(Sys.Date()), unit = "month")) %>%
-#   mutate(CREATED_MONTH = as.Date(floor_date(CREATED, unit = "month"))) %>%
-#   group_by(CREATED_MONTH, TICKET, APPGROUP) %>%
-#   summarize(NEW_TICKET = n()) %>%
-#   ungroup()
-# 
-# write.csv(t_nb_ticket_team, here::here("Data", "t_nb_ticket_team.csv"), row.names = FALSE)
-# 
-# 
-# 
-# # Teams Backlog -----------------------------------------------------------
-# message("Start team backlog aggregation for ticket types")
-# t_backlog_ticket_team <- get_backlog(t_backlog_tr, t_cutpoints, TICKET, APPGROUP)
-# 
-# write.csv(t_backlog_ticket_team, here::here("Data", "t_backlog_ticket_team.csv"), row.names = FALSE)
-# 
-# 
-# 
-# 
-# # Teams Throughput --------------------------------------------------------
-# message("Start team throughput aggregation for ticket types")
-# t_throughput_ticket_team <- t_backlog_tr %>%
-#   # Transform data
-#   filter(!is.na(CLOSED)) %>%
-#   filter(CLOSED >= floor_date(ymd(Sys.Date()) - years(2), unit = "month") &
-#            CLOSED < floor_date(ymd(Sys.Date()), unit = "month")) %>%
-#   mutate(CLOSED_MONTH = as.Date(floor_date(CLOSED, unit = "month"))) %>%
-#   group_by(CLOSED_MONTH, TICKET, APPGROUP) %>%
-#   summarize(THROUGHPUT = n()) %>%
-#   ungroup()
-# 
-# write.csv(t_throughput_ticket_team, here::here("Data", "t_throughput_ticket_team.csv"), row.names = FALSE)
-# 
-# 
-# 
-# 
-# # Teams Throughput Time ---------------------------------------------------
-# message("Start team throughput time aggregation for ticket types")
-# t_throughputtime_ticket_team <- t_backlog_tr %>%
-#   # Transform data
-#   filter(!is.na(CLOSED)) %>%
-#   filter(CLOSED >= floor_date(ymd(Sys.Date()) - years(2), unit = "month") &
-#            CLOSED < floor_date(ymd(Sys.Date()), unit = "month")) %>%
-#   mutate(CLOSED_MONTH = as.Date(floor_date(CLOSED, unit = "month")),
-#          THROUGHPUT_TIME = difftime(CLOSED, CREATED ,units="days")) %>%
-#   group_by(CLOSED_MONTH, TICKET, APPGROUP) %>%
-#   summarize(THROUGHPUT_TIME = round(median(THROUGHPUT_TIME), 1)) %>%
-#   ungroup()
-# 
-# write.csv(t_throughputtime_ticket_team, here::here("Data", "t_throughputtime_ticket_team.csv"), row.names = FALSE)
-# 
-# 
-# 
-# 
-# # Teams FTE ---------------------------------------------------------
-# message("Start team resources aggregation for ticket types")
-# t_fte_ticket_team <- t_fte_tr %>%
-#   filter(!is.na(MONTH_WORKTIMESHEET)) %>%
-#   mutate(MONTH_WORKTIMESHEET = ymd_hms(MONTH_WORKTIMESHEET)) %>% 
-#   filter(MONTH_WORKTIMESHEET >= floor_date(ymd(Sys.Date()) - years(2), unit = "month") &
-#            MONTH_WORKTIMESHEET < floor_date(ymd(Sys.Date()), unit = "month")) %>%
-#   group_by(MONTH_WORKTIMESHEET, TICKET, USERORG_WORKTIMESHEET) %>% 
-#   summarize(HOURS_WORKTIMESHEET = sum(HOURS_WORKTIMESHEET),
-#             TICKET_NUM = n()) %>% 
-#   ungroup() %>% 
-#   left_join(t_mnap, by = c("MONTH_WORKTIMESHEET" = "IDOSZAK")) %>% 
-#   mutate(FTE = round(HOURS_WORKTIMESHEET/7/MNAP, 2),
-#          FTE_NORM = round(FTE/TICKET_NUM, 4)) 
-# 
-# write.csv(t_fte_ticket_team, here::here("Data", "t_fte_ticket_team.csv"), row.names = FALSE)
-# 
-# 
-# 
-# 
+# Teams New Ticket -----------------------------------------------------------
+message("Start team new ticket aggregation for ticket types")
+t_nb_ticket_team <- t_backlog_tr %>%
+  # Transform data
+  filter(!is.na(CREATED)) %>%
+  filter(CREATED >= floor_date(ymd(Sys.Date()) - years(2), unit = "month") &
+           CREATED < floor_date(ymd(Sys.Date()), unit = "month")) %>%
+  group_by(CREATED_MONTH, TICKET, APPGROUP) %>%
+  summarize(COUNT = n()) %>%
+  ungroup()
 
-# 
-# 
-# 
-# # Teams Dev FTE  ----------------------------------------------------------------
-# message("Start teams dev FTE phases aggregation for ticket types")
-# t_fte_phases_team <- t_dev_fte_phases_tr %>%
-#   mutate(
-#     MONTH_WORKTIMESHEET = floor_date(CREATED_WORKTIMESHEET, unit = "month"),
-#     FTE_BREAKDOWN = case_when(
-#       !is.na(ABORTED) ~ "Aborted",
-#       is.na(ABORTED) & is.na(PHASE) ~ "Demand",
-#       TRUE ~ PHASE
-#     )
-#   ) %>%
-#   filter(MONTH_WORKTIMESHEET >= floor_date(ymd(Sys.Date()) - years(2), unit = "month") &
-#            MONTH_WORKTIMESHEET < floor_date(ymd(Sys.Date()), unit = "month")) %>%
-#   group_by(MONTH_WORKTIMESHEET, FTE_BREAKDOWN, USERORG_WORKTIMESHEET) %>%
-#   summarize(
-#     HOURS_WORKTIMESHEET = sum(HOURS_WORKTIMESHEET),
-#     TICKET_NUM = n()
-#   ) %>%
-#   ungroup() %>%
-#   left_join(t_mnap, by = c("MONTH_WORKTIMESHEET" = "IDOSZAK")) %>%
-#   mutate(
-#     FTE = round(HOURS_WORKTIMESHEET / 7 / MNAP, 2),
-#     FTE_NORM = round(FTE / TICKET_NUM, 4)
-#   )
-# 
-# write.csv(t_fte_phases_team, here::here("Data", "t_fte_phases_team.csv"), row.names = FALSE)
-# 
-# 
-# 
-# 
-# # Leader Board Throughput Open ------------------------------------------
-# message("Start Leader Board Throughput Closed aggregation for tickets")
-# t_lb_tp_open <- t_backlog_tr %>% 
-#   filter(is.na(CLOSED)) %>% 
-#   filter(!is.na(LAST_EVENT)) %>% 
-#   select(CASE, ISSUE_TITLE, CREATED, TICKET, LAST_EVENT, LAST_EVENT_DATE, APPGROUP) %>% 
-#   mutate(DAYS_OPEN = difftime(Sys.Date(), CREATED, units="days")) %>% 
-#   group_by(TICKET) %>% 
-#   top_n(10, row_number(DAYS_OPEN)) %>% 
-#   ungroup() %>% 
-#   mutate(DAYS_OPEN = round(DAYS_OPEN, 0)) %>% 
-#   arrange(TICKET, desc(DAYS_OPEN)) %>% 
-#   select(TICKET, CASE, ISSUE_TITLE, CREATED, TEAM = APPGROUP, DAYS_OPEN, LAST_EVENT, LAST_EVENT_DATE)
-# 
-# write.csv(t_lb_tp_open, here::here("Data", "t_lb_tp_open.csv"), row.names = FALSE)
-# 
-# 
-# 
-# # Leader Board FTE  ------------------------------------------
-# message("Start Leader Board FTE aggregation for tickets")
-# t_lb_fte_open <- t_fte_tr %>% 
-#   filter(is.na(CLOSED)) %>% 
-#   group_by(TICKET, CASE, ISSUE_TITLE, CREATED, TEAM = APPGROUP) %>% 
-#   summarize(TOTAL_HOURS = sum(HOURS_WORKTIMESHEET)) %>% 
-#   ungroup() %>%
-#   mutate(MONTHS_OPEN = as.numeric(difftime(Sys.Date(), CREATED, units= "days") / 30),
-#          FTE_PER_MONTH = round(TOTAL_HOURS/MONTHS_OPEN/7/21, 2)) %>% 
-#   group_by(TICKET) %>% 
-#   top_n(10, row_number(TOTAL_HOURS)) %>% 
-#   ungroup() %>% 
-#   mutate(TOTAL_HOURS = round(TOTAL_HOURS, 0)) %>% 
-#   arrange(TICKET, desc(TOTAL_HOURS)) %>% 
-#   select(-MONTHS_OPEN)
-# 
-# write.csv(t_lb_fte_open, here::here("Data", "t_lb_fte_open.csv"), row.names = FALSE)
-# 
-# 
-# 
+write.csv(t_nb_ticket_team, here::here("Data", "t_nb_ticket_team.csv"), row.names = FALSE)
+
+
+
+# Teams Backlog -----------------------------------------------------------
+message("Start team backlog aggregation for ticket types")
+t_backlog_ticket_team <- get_backlog(t_backlog_tr, t_cutpoints, TICKET, APPGROUP)
+
+write.csv(t_backlog_ticket_team, here::here("Data", "t_backlog_ticket_team.csv"), row.names = FALSE)
+
+
+
+
+# Teams Throughput --------------------------------------------------------
+message("Start team throughput aggregation for ticket types")
+t_throughput_ticket_team <- t_backlog_tr %>%
+  # Transform data
+  filter(!is.na(CLOSED)) %>%
+  filter(CLOSED >= floor_date(ymd(Sys.Date()) - years(2), unit = "month") &
+           CLOSED < floor_date(ymd(Sys.Date()), unit = "month")) %>%
+  group_by(CLOSED_MONTH, TICKET, APPGROUP) %>%
+  summarize(COUNT = n()) %>%
+  ungroup()
+
+write.csv(t_throughput_ticket_team, here::here("Data", "t_throughput_ticket_team.csv"), row.names = FALSE)
+
+
+
+
+# Teams Throughput Time ---------------------------------------------------
+message("Start team throughput time aggregation for ticket types")
+t_throughputtime_ticket_team <- t_backlog_tr %>%
+  # Transform data
+  filter(!is.na(CLOSED)) %>%
+  filter(CLOSED >= floor_date(ymd(Sys.Date()) - years(2), unit = "month") &
+           CLOSED < floor_date(ymd(Sys.Date()), unit = "month")) %>%
+  mutate(THROUGHPUT_TIME = difftime(CLOSED, CREATED ,units="days")) %>%
+  group_by(CLOSED_MONTH, TICKET, APPGROUP) %>%
+  summarize(THROUGHPUT_TIME = round(median(THROUGHPUT_TIME), 1)) %>%
+  ungroup()
+
+write.csv(t_throughputtime_ticket_team, here::here("Data", "t_throughputtime_ticket_team.csv"), row.names = FALSE)
+
+
+
+
+# Teams FTE ---------------------------------------------------------
+message("Start team resources aggregation for ticket types")
+t_fte_ticket_team <- t_fte_tr %>%
+  filter(!is.na(TARGETDAY)) %>%
+  filter(TARGETDAY >= floor_date(ymd(Sys.Date()) - years(2), unit = "month") &
+           TARGETDAY < floor_date(ymd(Sys.Date()), unit = "month")) %>%
+  group_by(TARGETDAY_TO_MONTH, TARGET_MONTH, TICKET, USERORG_WORKTIMESHEET) %>%
+  summarize(HOURS_WORKTIMESHEET = sum(HOURS_WORKTIMESHEET),
+            TICKET_NUM = n()) %>%
+  ungroup() %>%
+  left_join(t_mnap, by = c("TARGETDAY_TO_MONTH" = "IDOSZAK")) %>%
+  mutate(FTE = round(HOURS_WORKTIMESHEET/7/MNAP, 2),
+         FTE_NORM = round(FTE/TICKET_NUM, 4))
+
+write.csv(t_fte_ticket_team, here::here("Data", "t_fte_ticket_team.csv"), row.names = FALSE)
+
+
+
+
+# Leader Board Throughput Open ------------------------------------------
+message("Start Leader Board Throughput Closed aggregation for tickets")
+t_lb_tp_open <- t_backlog_tr %>%
+  filter(is.na(CLOSED)) %>%
+  filter(!is.na(LAST_EVENT)) %>%
+  select(CASE_ID, ISSUE_TITLE, CREATED, TICKET, LAST_EVENT, LAST_EVENT_DATE, APPGROUP) %>%
+  mutate(DAYS_OPEN = difftime(Sys.Date(), CREATED, units="days")) %>%
+  group_by(TICKET) %>%
+  top_n(10, row_number(DAYS_OPEN)) %>%
+  ungroup() %>%
+  mutate(DAYS_OPEN = round(DAYS_OPEN, 0)) %>%
+  arrange(TICKET, desc(DAYS_OPEN)) %>%
+  select(TICKET, CASE_ID, ISSUE_TITLE, CREATED, TEAM = APPGROUP, DAYS_OPEN, LAST_EVENT, LAST_EVENT_DATE)
+
+write.csv(t_lb_tp_open, here::here("Data", "t_lb_tp_open.csv"), row.names = FALSE)
+
+
+# Leader Board FTE  ------------------------------------------
+message("Start Leader Board FTE aggregation for tickets")
+t_lb_fte_open <- t_fte_tr %>%
+  filter(is.na(CLOSED)) %>%
+  group_by(TICKET, CASE_ID, ISSUE_TITLE, CREATED, TEAM = APPGROUP) %>%
+  summarize(TOTAL_HOURS = sum(HOURS_WORKTIMESHEET)) %>%
+  ungroup() %>%
+  mutate(MONTHS_OPEN = as.numeric(difftime(Sys.Date(), CREATED, units= "days") / 30),
+         FTE_PER_MONTH = round(TOTAL_HOURS/MONTHS_OPEN/7/21, 2)) %>%
+  group_by(TICKET) %>%
+  top_n(10, row_number(TOTAL_HOURS)) %>%
+  ungroup() %>%
+  mutate(TOTAL_HOURS = round(TOTAL_HOURS, 0)) %>%
+  arrange(TICKET, desc(TOTAL_HOURS)) %>%
+  select(-MONTHS_OPEN)
+
+write.csv(t_lb_fte_open, here::here("Data", "t_lb_fte_open.csv"), row.names = FALSE)
+
+
+
 
 
 
