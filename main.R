@@ -326,10 +326,14 @@ write.csv(t_fte_ticket_team, here::here("Data", "t_fte_ticket_team.csv"), row.na
 # Leader Board Throughput Open ------------------------------------------
 message("Start Leader Board Throughput Closed aggregation for tickets")
 t_lb_tp_open <- t_backlog_tr %>%
+  left_join(t_dev_milestones_tr %>%
+              filter(ABORTED == "I ") %>% 
+              select(CASE_ID, ABORTED), by = "CASE_ID") %>%
   filter(is.na(CLOSED)) %>%
   filter(!is.na(LAST_EVENT)) %>%
+  filter(is.na(ABORTED)) %>%
   select(CASE_ID, ISSUE_TITLE, CREATED, TICKET, LAST_EVENT, LAST_EVENT_DATE, APPGROUP) %>%
-  mutate(DAYS_OPEN = difftime(Sys.Date(), CREATED, units="days")) %>%
+  mutate(DAYS_OPEN = difftime(Sys.Date(), CREATED, units = "days")) %>%
   group_by(TICKET) %>%
   top_n(10, row_number(DAYS_OPEN)) %>%
   ungroup() %>%
