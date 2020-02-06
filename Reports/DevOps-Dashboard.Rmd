@@ -685,7 +685,7 @@ t_lb_tp_open %>%
 ```{r}
 library(kableExtra)
 
-t_lb_fte_open <- read.csv(here::here("Data", "t_lb_fte_open.csv"), stringsAsFactors = FALSE)
+t_lb_fte_open <- read.csv(here::here("Data", "t_lb_fte_open.csv"), stringsAsFactors = FALSE) %>% filter(TICKET != "Development-RFC") 
 
 t_lb_fte_open %>% 
   select(-TICKET) %>%
@@ -695,6 +695,7 @@ t_lb_fte_open %>%
   pack_rows(t_lb_fte_open[11, 1], 11, 20, label_row_css = "background-color: #666; color: #fff;") %>%
   pack_rows(t_lb_fte_open[21, 1], 21, 30, label_row_css = "background-color: #666; color: #fff;") %>%
   pack_rows(t_lb_fte_open[31, 1], 31, 40, label_row_css = "background-color: #666; color: #fff;")%>% 
- pack_rows(t_lb_tp_open[41, 1], 41, 50, label_row_css = "background-color: #666; color: #fff;") %>%
-  pack_rows(t_lb_tp_open[51, 1], 51, 60, label_row_css = "background-color: #666; color: #fff;") 
+ pack_rows(t_lb_tp_open[41, 1], 41, 50, label_row_css = "background-color: #666; color: #fff;")
+#%>%
+#  pack_rows(t_lb_tp_open[51, 1], 51, 60, label_row_css = "background-color: #666; color: #fff;") 
 ```
