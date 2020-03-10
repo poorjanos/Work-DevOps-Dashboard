@@ -51,13 +51,13 @@ AS
                                 DATE '2019-03-14'
                           AND ( (EXISTS
                                     (SELECT   1
-                                       FROM   KASPERSK.ISSUESTATUSLOG s
+                                       FROM  AGSTG.ISD_ISSUESTATUSLOG s
                                       WHERE   ISSUESTATENEW LIKE '#00%'
                                               AND i.oid = s.issue)
                                  AND steps.distinct_steps >= 30)
                                OR (NOT EXISTS
                                       (SELECT   1
-                                         FROM   KASPERSK.ISSUESTATUSLOG s
+                                         FROM  AGSTG.ISD_ISSUESTATUSLOG s
                                         WHERE   ISSUESTATENEW LIKE '#00%'
                                                 AND i.oid = s.issue)
                                    AND steps.distinct_steps >= 29))))
@@ -76,13 +76,13 @@ AS
                                 DATE '2019-03-14'
                           AND ( (EXISTS
                                     (SELECT   1
-                                       FROM   KASPERSK.ISSUESTATUSLOG s
+                                       FROM  AGSTG.ISD_ISSUESTATUSLOG s
                                       WHERE   ISSUESTATENEW LIKE '#00%'
                                               AND i.oid = s.issue)
                                  AND steps.distinct_steps >= 26)
                                OR (NOT EXISTS
                                       (SELECT   1
-                                         FROM   KASPERSK.ISSUESTATUSLOG s
+                                         FROM  AGSTG.ISD_ISSUESTATUSLOG s
                                         WHERE   ISSUESTATENEW LIKE '#00%'
                                                 AND i.oid = s.issue)
                                    AND steps.distinct_steps >= 27))))
@@ -96,18 +96,18 @@ AS
                   'I'
             END
                AS conform
-     FROM                              KASPERSK.ISSUE i
+     FROM                             AGSTG.ISD_ISSUE i
                                     LEFT JOIN
-                                       KASPERSK.BUSINESSUNIT bu
+                                      AGSTG.ISD_BUSINESSUNIT bu
                                     ON bu.OID = i.BUSINESSUNIT
                                  LEFT JOIN
-                                    KASPERSK.COMPANY co
+                                   AGSTG.ISD_COMPANY co
                                  ON co.OID = bu.COMPANY
                               LEFT JOIN
-                                 KASPERSK.ORGANIZATION org
+                                AGSTG.ISD_ORGANIZATION org
                               ON org.OID = i.ORGANIZATION
                            LEFT JOIN
-                              KASPERSK.CLASSIFICATION class
+                             AGSTG.ISD_CLASSIFICATION class
                            ON class.OID = i.CLASSIFICATION
                         /* Add appgroup */
                         LEFT JOIN
@@ -122,9 +122,9 @@ AS
                                 FROM   (  SELECT   DISTINCT
                                                    issueapp.issues,
                                                    app.applicationgroup
-                                            FROM      KASPERSK.ISSUEISSUES_APPLICATI_BF90650B issueapp
+                                            FROM     AGSTG.ISD_ISSUEISSUES_APPLICATI_BF90650B issueapp
                                                    INNER JOIN
-                                                      KASPERSK.application app
+                                                     AGSTG.ISD_application app
                                                    ON app.oid =
                                                          issueapp.applications
                                         ORDER BY   issueapp.issues)
@@ -136,9 +136,9 @@ AS
                         (SELECT   status.ISSUE,
                                   status.MODIFIEDDATE AS TIMESTAMP,
                                   status.ISSUESTATENEW AS ACTIVITY
-                           FROM      KASPERSK.ISSUESTATUSLOG status
+                           FROM     AGSTG.ISD_ISSUESTATUSLOG status
                                   INNER JOIN
-                                     KASPERSK.ISSUESTATUSLOG case_closed
+                                    AGSTG.ISD_ISSUESTATUSLOG case_closed
                                   ON case_closed.OID = status.OID
                           WHERE   REGEXP_LIKE (
                                      case_closed.ISSUESTATENEW,
@@ -149,7 +149,7 @@ AS
                                          SELECT   MAX (
                                                      statusLast.MODIFIEDDATE
                                                   )
-                                           FROM   KASPERSK.ISSUESTATUSLOG statusLast
+                                           FROM  AGSTG.ISD_ISSUESTATUSLOG statusLast
                                           WHERE   statusLast.ISSUE =
                                                      status.ISSUE))
                         last_status_equals_case_closed
@@ -166,13 +166,13 @@ AS
                                   OVER (PARTITION BY status.ISSUE
                                         ORDER BY status.MODIFIEDDATE DESC)
                                   AS ACTIVITY
-                        FROM   KASPERSK.ISSUESTATUSLOG status) last_event
+                        FROM  AGSTG.ISD_ISSUESTATUSLOG status) last_event
                   ON last_event.ISSUE = i.OID
                /* Add admin step flag */
                LEFT JOIN
                   (SELECT   DISTINCT status.issue, 'I' AS admin_step
-                     FROM   KASPERSK.ISSUESTATUSLOG status,
-                            KASPERSK.PERMISSIONPOLICYUSER isduser
+                     FROM  AGSTG.ISD_ISSUESTATUSLOG status,
+                           AGSTG.ISD_PERMISSIONPOLICYUSER isduser
                     WHERE   status."USER" = isduser.oid
                             AND NOT REGEXP_LIKE (
                                        status.ISSUESTATENEW,
@@ -193,7 +193,7 @@ AS
                            COUNT (status.issuestatenew) AS total_steps,
                            COUNT (DISTINCT status.issuestatenew)
                               AS distinct_steps
-                    FROM   KASPERSK.issuestatuslog status
+                    FROM  AGSTG.ISD_issuestatuslog status
                 GROUP BY   status.issue) steps
             ON steps.issue = i.oid
     WHERE   UPPER (i.TITLE) NOT LIKE 'PRÓBA%';

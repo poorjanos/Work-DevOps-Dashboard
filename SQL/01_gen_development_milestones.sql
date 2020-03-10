@@ -42,7 +42,7 @@ COMMIT;
 UPDATE   t_dev_milestones a
    SET   demand_start =
             (SELECT   MIN (modifieddate)
-               FROM   KASPERSK.issuestatuslog b
+               FROM   AGSTG.ISD_issuestatuslog b
               WHERE   a.oid = b.issue
                       AND REGEXP_LIKE (b.issuestatenew,
                                        '^#02.*|^02.*|^S02.*'));
@@ -50,7 +50,7 @@ UPDATE   t_dev_milestones a
 UPDATE   t_dev_milestones a
    SET   backlog_end =
             (SELECT   MIN (modifieddate)
-               FROM   KASPERSK.issuestatuslog b
+               FROM   AGSTG.ISD_issuestatuslog b
               WHERE   a.oid = b.issue
                       AND REGEXP_LIKE (b.issuestatenew,
                                        '^#17.*|^12.*|^S17.*'));
@@ -58,7 +58,7 @@ UPDATE   t_dev_milestones a
 UPDATE   t_dev_milestones a
    SET   release_start =
             (SELECT   MIN (modifieddate)
-               FROM   KASPERSK.issuestatuslog b
+               FROM   AGSTG.ISD_issuestatuslog b
               WHERE   a.oid = b.issue
                       AND REGEXP_LIKE (b.issuestatenew,
                                        '^#13.*|^10.*|^S15.*'));
@@ -66,7 +66,7 @@ UPDATE   t_dev_milestones a
 UPDATE   t_dev_milestones a
    SET   uat_start =
             (SELECT   MIN (modifieddate)
-               FROM   KASPERSK.issuestatuslog b
+               FROM   AGSTG.ISD_issuestatuslog b
               WHERE   a.oid = b.issue
                       AND REGEXP_LIKE (b.issuestatenew,
                                        '^#27.*|^17.*|^S27.*'));
@@ -74,7 +74,7 @@ UPDATE   t_dev_milestones a
 UPDATE   t_dev_milestones a
    SET   uat_end =
             (SELECT   MIN (modifieddate)
-               FROM   KASPERSK.issuestatuslog b
+               FROM   AGSTG.ISD_issuestatuslog b
               WHERE   a.oid = b.issue
                       AND REGEXP_LIKE (b.issuestatenew,
                                        '^#28.*|^18.*|^S28.*'));
@@ -85,7 +85,7 @@ UPDATE   t_dev_milestones a
    SET   aborted = 'I'
  WHERE   EXISTS
             (SELECT   1
-               FROM   KASPERSK.issuestatuslog b
+               FROM   AGSTG.ISD_issuestatuslog b
               WHERE   a.oid = b.issue
                       AND REGEXP_LIKE (
                             b.issuestatenew,
@@ -204,7 +204,7 @@ AS
                                                  AS lag_timestamp
                                        FROM      t_dev_milestones tickets
                                               LEFT JOIN
-                                                 KASPERSK.ISSUESTATUSLOG status
+                                                 AGSTG.ISD_ISSUESTATUSLOG status
                                               ON tickets.oid = status.issue
                                    ORDER BY   tickets.case_id,
                                               status.MODIFIEDDATE)

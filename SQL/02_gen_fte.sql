@@ -25,15 +25,15 @@ AS
                              d.name AS actiontypegroup,
                              TRUNC (a.startdate, 'ddd') AS targetday,
                              SUM (hours) AS hours_worktimesheet
-                      FROM            KASPERSK.worktimesheet a
+                      FROM            AGSTG.ISD_worktimesheet a
                                    LEFT JOIN
-                                      KASPERSK.permissionpolicyuser b
+                                      AGSTG.ISD_permissionpolicyuser b
                                    ON a.owner = b.oid
                                 LEFT JOIN
-                                   KASPERSK.organization c
+                                   AGSTG.ISD_organization c
                                 ON b.defaultorganization = c.oid
                              LEFT JOIN
-                                KASPERSK.actiontypegroup d
+                                AGSTG.ISD_actiontypegroup d
                              ON A.ACTIONTYPEGROUP = D.OID
                      WHERE   a.timetype = 'WorkTime'
                   GROUP BY   issue,
