@@ -60,7 +60,9 @@ AS
                                          FROM  AGSTG.ISD_ISSUESTATUSLOG s
                                         WHERE   ISSUESTATENEW LIKE '#00%'
                                                 AND i.oid = s.issue)
-                                   AND steps.distinct_steps >= 29))))
+                                   AND steps.distinct_steps >= 29)))
+                      OR (i.CREATED >= DATE '2020-05-01'
+                          AND steps.distinct_steps >= 31))
                THEN
                   'I'
                --VIP conformance
@@ -85,13 +87,17 @@ AS
                                          FROM  AGSTG.ISD_ISSUESTATUSLOG s
                                         WHERE   ISSUESTATENEW LIKE '#00%'
                                                 AND i.oid = s.issue)
-                                   AND steps.distinct_steps >= 27))))
+                                   AND steps.distinct_steps >= 27)))
+                        OR (i.CREATED >= DATE '2020-05-01'
+                          AND steps.distinct_steps >= 29))
                THEN
                   'I'
                --SDEV conformance
             WHEN     last_status_equals_case_closed.TIMESTAMP IS NOT NULL
                  AND CLASS.REGISTRATIONIDPREFIX = 'SDEV'
-                 AND steps.distinct_steps >= 16
+                 AND 
+                 ((i.CREATED < DATE '2020-05-01' AND steps.distinct_steps >= 16)
+                 OR (i.CREATED >= DATE '2020-05-01' AND steps.distinct_steps >= 18))
                THEN
                   'I'
             END
@@ -151,7 +157,12 @@ AS
                                                   )
                                            FROM  AGSTG.ISD_ISSUESTATUSLOG statusLast
                                           WHERE   statusLast.ISSUE =
-                                                     status.ISSUE))
+                                                     status.ISSUE
+                                                     AND 
+                                                     REGEXP_LIKE (
+                                     statusLast.ISSUESTATENEW,
+                                     '^#01.*|^#29.*|^20.*|^21.*|^22.*|^23.*|^24.*|^H08.*|^H14.*|^H10.*|^H11.*|^H09.*|^H12.*|^H13.*|^S31.*'
+                                  )))
                         last_status_equals_case_closed
                      ON last_status_equals_case_closed.ISSUE = i.OID
                   /* Add last event */
